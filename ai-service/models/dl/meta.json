@@ -1,0 +1,11 @@
+{
+  "window": 8,
+  "n_products": 52,
+  "n_actions": 10,
+  "models": [
+    "rnn",
+    "lstm",
+    "bilstm"
+  ],
+  "source": "csv"
+}
