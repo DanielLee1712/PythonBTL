@@ -1,0 +1,56 @@
+import { ShoppingCart, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useStore } from '../store/useStore';
+import { trackBehavior } from '../utils/tracking';
+
+export default function ProductCard({ p }) {
+  const user = useStore((state) => state.user);
+  const addToCart = useStore((state) => state.addToCart);
+
+  const formatPrice = (v) => Number(v || 0).toLocaleString('vi-VN');
+
+  const handleAddToCart = async (product) => {
+    try {
+      await addToCart(product);
+      await trackBehavior(user?.id, product.id, 'add_to_cart');
+    } catch (e) {
+      console.log('Add to cart failed');
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1 group flex flex-col">
+      <Link to={`/product/${p.id}`} className="block">
+        <div className="h-48 bg-gray-100 flex items-center justify-center p-4">
+          <div className="text-gray-300 font-medium border-2 border-dashed border-gray-300 rounded-full w-32 h-32 flex items-center justify-center bg-white text-center text-sm">
+            {p.category_name || 'SP'}
+          </div>
+        </div>
+      </Link>
+      <div className="p-5 flex flex-col flex-grow">
+        <Link to={`/product/${p.id}`} className="block">
+          <h3 className="font-bold text-lg text-gray-800 mb-2 truncate hover:text-blue-600 transition-colors" title={p.title || p.name}>
+            {p.title || p.name}
+          </h3>
+        </Link>
+        <p className="text-blue-600 font-black mb-4 tracking-tight flex-grow">
+          {formatPrice(p.price)} ₫
+        </p>
+        <div className="flex gap-2 mt-auto">
+          <Link 
+            to={`/product/${p.id}`}
+            className="flex-1 bg-gray-50 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl flex justify-center items-center gap-2 transition-colors"
+          >
+            <Eye size={18} /> Xem
+          </Link>
+          <button 
+            onClick={() => handleAddToCart(p)} 
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-sm"
+          >
+            <ShoppingCart size={18} /> Mua
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
