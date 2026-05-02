@@ -1,8 +1,10 @@
 """
 Product API Views
 """
+from django.db import transaction
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -32,6 +34,23 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'price', 'created_at']
     ordering = ['-created_at']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        ids_param = self.request.query_params.get('ids')
+        if self.action == 'list' and ids_param:
+            id_list = []
+            for part in ids_param.split(','):
+                part = part.strip()
+                if not part:
+                    continue
+                try:
+                    id_list.append(int(part))
+                except ValueError:
+                    continue
+            if id_list:
+                return qs.filter(id__in=id_list)
+        return qs
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -79,6 +98,50 @@ class ProductViewSet(viewsets.ModelViewSet):
         products = products.select_related('category', 'brand')
         serializer = ProductListSerializer(products, many=True)
         return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path='adjust-stock',
+        permission_classes=[AllowAny],
+    )
+    def adjust_stock(self, request):
+        """Adjust product stock by delta (negative decreases, positive increases)."""
+        product_id = request.data.get('product_id')
+        delta = request.data.get('delta')
+        if product_id is None or delta is None:
+            return Response(
+                {'detail': 'product_id and delta are required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            product_id = int(product_id)
+            delta = int(delta)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': 'product_id and delta must be integers'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        with transaction.atomic():
+            product = (
+                ProductModel.objects.select_for_update()
+                .filter(id=product_id)
+                .first()
+            )
+            if not product:
+                return Response({'detail': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+            new_qty = int(product.stock_quantity) + delta
+            if new_qty < 0:
+                return Response(
+                    {'detail': 'Insufficient stock', 'stock_quantity': product.stock_quantity},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            product.stock_quantity = new_qty
+            product.save(update_fields=['stock_quantity', 'updated_at'])
+        return Response(
+            {'id': product.id, 'stock_quantity': product.stock_quantity},
+            status=status.HTTP_200_OK,
+        )
 
 
 class VariantViewSet(viewsets.ModelViewSet):

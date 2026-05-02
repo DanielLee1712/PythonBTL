@@ -6,9 +6,13 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ProductDetail from './pages/ProductDetail';
 import ProductList from './pages/ProductList';
+import OrderList from './pages/OrderList';
+import OrderDetail from './pages/OrderDetail';
+import VnpayReturn from './pages/VnpayReturn';
+import Checkout from './pages/Checkout';
 import Chatbot from './components/Chatbot';
 import { useStore } from './store/useStore';
-import { ShoppingCart, User, LogOut } from 'lucide-react';
+import { ShoppingCart, LogOut } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -23,7 +27,7 @@ function App() {
     }
   }, [user, fetchCart]);
 
-  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const cartLineCount = cart.length;
 
   return (
     <Router>
@@ -31,30 +35,34 @@ function App() {
         <header className="bg-white shadow-sm sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <Link to="/" className="flex items-center gap-2">
+              <Link to="/" reloadDocument className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">AI</span>
+                  <span className="text-white font-bold text-sm tracking-tight">ES</span>
                 </div>
-                <span className="font-bold text-xl tracking-tight text-gray-800">Ecommerce</span>
+                <span className="font-bold text-xl tracking-tight text-gray-800">ElecStore</span>
               </Link>
               
               <nav className="hidden md:flex space-x-8">
                 <Link to="/" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Trang chủ</Link>
                 <Link to="/products" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Sản phẩm</Link>
+                {user && (
+                  <Link to="/orders" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Đơn hàng</Link>
+                )}
               </nav>
 
               <div className="flex items-center gap-6">
                 <Link to="/cart" className="relative text-gray-600 hover:text-blue-600 transition-colors">
                   <ShoppingCart size={24} />
-                  {cartItemCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
-                      {cartItemCount}
+                  {cartLineCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold min-w-[1.25rem] h-5 px-1 rounded-full flex items-center justify-center shadow-sm">
+                      {cartLineCount > 99 ? '99+' : cartLineCount}
                     </span>
                   )}
                 </Link>
                 
                 {user ? (
                   <div className="flex items-center gap-4">
+                    <Link to="/orders" className="text-sm text-blue-600 hover:underline hidden sm:inline">Đơn hàng</Link>
                     <span className="text-sm font-medium text-gray-700 hidden sm:block">Chào, {user.username}</span>
                     <button onClick={() => setUser(null)} className="text-gray-500 hover:text-red-500 transition-colors" title="Đăng xuất">
                       <LogOut size={20} />
@@ -75,10 +83,14 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/products" element={<ProductList />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/orders" element={<OrderList />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/vnpay-return" element={<VnpayReturn />} />
           </Routes>
         </main>
         
@@ -86,7 +98,7 @@ function App() {
         
         <footer className="bg-white border-t border-gray-200 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <p className="text-center text-gray-500 text-sm">© 2026 AI Ecommerce. All rights reserved.</p>
+            <p className="text-center text-gray-500 text-sm">© 2026 ElecStore. All rights reserved.</p>
           </div>
         </footer>
       </div>

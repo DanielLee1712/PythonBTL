@@ -3,19 +3,21 @@ import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { trackBehavior } from '../utils/tracking';
 
-export default function ProductCard({ p }) {
+export default function ProductCard({ p, onAfterAddToCart }) {
   const user = useStore((state) => state.user);
   const addToCart = useStore((state) => state.addToCart);
 
   const formatPrice = (v) => Number(v || 0).toLocaleString('vi-VN');
 
   const handleAddToCart = async (product) => {
-    try {
-      await addToCart(product);
-      await trackBehavior(user?.id, product.id, 'add_to_cart');
-    } catch (e) {
-      console.log('Add to cart failed');
+    const res = await addToCart(product);
+    if (!res?.ok) {
+      window.alert(res?.error || 'Không thể thêm vào giỏ');
+      return;
     }
+    await trackBehavior(user?.id, product.id, 'add_to_cart');
+    // Optimistic stock decrement (qty=1 on this button), then refetch by id in parent.
+    onAfterAddToCart?.(product.id, { delta: -1, bustCache: true });
   };
 
   return (
@@ -33,8 +35,11 @@ export default function ProductCard({ p }) {
             {p.title || p.name}
           </h3>
         </Link>
-        <p className="text-blue-600 font-black mb-4 tracking-tight flex-grow">
+        <p className="text-blue-600 font-black mb-1 tracking-tight flex-grow">
           {formatPrice(p.price)} ₫
+        </p>
+        <p className="text-xs text-gray-500 mb-4">
+          Còn: <span className="font-semibold text-gray-700">{p.quantity ?? p.stock_quantity ?? 0}</span>
         </p>
         <div className="flex gap-2 mt-auto">
           <Link 

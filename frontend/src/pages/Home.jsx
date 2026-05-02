@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useStore } from '../store/useStore';
+import { AI_SERVICE_URL, PRODUCT_SERVICE_URL } from '../config';
+import { fetchProductsByIds, pickProductRow } from '../utils/productRefresh';
 import { Search as SearchIcon, Sparkles, TrendingUp } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 
 export default function Home() {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [recommended, setRecommended] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,9 +19,59 @@ export default function Home() {
   const [searchSource, setSearchSource] = useState('');
   const user = useStore((state) => state.user);
 
+  const refreshProductById = useCallback((productId, opts = {}) => {
+    const pid = Number(productId);
+    const delta = Number(opts?.delta || 0);
+    if (Number.isFinite(pid) && delta) {
+      const patchLocal = (row) => {
+        if (Number(row.id) !== pid) return row;
+        const cur = Number(row.quantity ?? row.stock_quantity ?? 0);
+        const next = Math.max(0, cur + delta);
+        return { ...row, quantity: next, stock_quantity: next };
+      };
+      setProducts((prev) => prev.map(patchLocal));
+      setSearchResults((prev) => prev.map(patchLocal));
+      setRecommended((prev) => prev.map(patchLocal));
+    }
+
+    fetchProductsByIds(productId, { bustCache: opts?.bustCache ?? true })
+      .then((rows) => {
+        const updated = pickProductRow(rows, productId);
+        if (!updated) return;
+        const pid2 = Number(updated.id);
+        const patch = (row) => (Number(row.id) === pid2 ? { ...row, ...updated } : row);
+        setProducts((prev) => prev.map(patch));
+        setSearchResults((prev) => prev.map(patch));
+        setRecommended((prev) => prev.map(patch));
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (params.get('paid') === '1') {
+      window.alert('Thanh toán thành công. Đơn hàng đã được cập nhật.');
+      navigate('/', { replace: true });
+      return;
+    }
+    if (params.get('payment_failed') === '1') {
+      window.alert('Thanh toán chưa hoàn tất hoặc thất bại.');
+      navigate('/', { replace: true });
+      return;
+    }
+    const keys = [...params.keys()];
+    if (!keys.some((k) => k.startsWith('vnp_'))) return;
+    const code = params.get('vnp_ResponseCode');
+    if (code === '00') {
+      window.alert('Thanh toán VNPAY thành công. Xem đơn tại mục Đơn hàng.');
+    } else if (code != null) {
+      window.alert('Thanh toán chưa hoàn tất hoặc không thành công.');
+    }
+    navigate('/', { replace: true });
+  }, [params, navigate]);
+
   useEffect(() => {
     // Port 8001 is Product Service
-    axios.get('http://localhost:8001/api/v1/products/')
+    axios.get(`${PRODUCT_SERVICE_URL}/api/v1/products/`)
       .then(res => setProducts(res.data.results || res.data))
       .catch(() => setProducts([
         {id: 1, title: 'Laptop Gaming Alienware', price: 45000000, category_name: 'Electronics'},
@@ -27,11 +82,11 @@ export default function Home() {
 
     if (user) {
       // Fetch GNN Recommendations from AI-Service
-      axios.get(`http://localhost:8002/api/v1/recommendations/${user.id}/`)
+      axios.get(`${AI_SERVICE_URL}/api/v1/recommendations/${user.id}/`)
         .then(res => {
           const ids = res.data.recommendations || [];
           if (ids.length > 0) {
-            axios.get(`http://localhost:8001/api/v1/products/?ids=${ids.join(',')}`)
+            axios.get(`${PRODUCT_SERVICE_URL}/api/v1/products/?ids=${ids.join(',')}`)
               .then(pRes => setRecommended(pRes.data.results || pRes.data))
               .catch(() => console.log("Lỗi fetch recommended products"));
           }
@@ -52,7 +107,7 @@ export default function Home() {
 
     setSearching(true);
     try {
-      const res = await axios.post('http://localhost:8002/api/v1/search/', {
+      const res = await axios.post(`${AI_SERVICE_URL}/api/v1/search/`, {
         user_id: user ? user.id : null,
         query: keyword,
         k: 40,
@@ -100,7 +155,6 @@ export default function Home() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-800">Tìm kiếm sản phẩm</h2>
-            <p className="text-xs text-gray-400">Tìm kiếm thông minh bằng AI + Sequence Reranking</p>
           </div>
         </div>
         <form onSubmit={handleSearch} className="flex gap-3">
@@ -148,7 +202,7 @@ export default function Home() {
             {searchResults.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {searchResults.map((p) => (
-                  <ProductCard p={p} key={`search-${p.id}`} />
+                  <ProductCard p={p} key={`search-${p.id}`} onAfterAddToCart={refreshProductById} />
                 ))}
               </div>
             ) : (
@@ -182,7 +236,7 @@ export default function Home() {
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
-            {recommended.map(p => <ProductCard p={p} key={`rec-${p.id}`} />)}
+            {recommended.map(p => <ProductCard p={p} key={`rec-${p.id}`} onAfterAddToCart={refreshProductById} />)}
           </div>
         </section>
       )}
@@ -191,7 +245,7 @@ export default function Home() {
       <section>
         <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">Tất Cả Sản Phẩm</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map(p => <ProductCard p={p} key={p.id} />)}
+          {products.map(p => <ProductCard p={p} key={p.id} onAfterAddToCart={refreshProductById} />)}
         </div>
       </section>
     </div>

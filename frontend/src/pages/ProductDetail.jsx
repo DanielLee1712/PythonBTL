@@ -1,39 +1,50 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
 import { useStore } from '../store/useStore';
+import { fetchProductByIdOrSlug } from '../utils/productRefresh';
 import { trackBehavior } from '../utils/tracking';
-import { ShoppingCart, Heart, Star, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Heart, Star, ArrowLeft, Plus, Minus } from 'lucide-react';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [rating, setRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
-  
+  const [buyQty, setBuyQty] = useState(1);
+
   const user = useStore((state) => state.user);
   const addToCart = useStore((state) => state.addToCart);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const res = await axios.get(`http://localhost:8001/api/v1/products/?ids=${id}`);
-        const results = res.data.results || res.data;
-        if (results && results.length > 0) {
-          setProduct(results[0]);
-        } else {
-          setProduct(null);
-        }
-      } catch (err) {
-        console.error("Lỗi tải chi tiết sản phẩm", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
+  const loadProduct = useCallback(async ({ bustCache = false } = {}) => {
+    try {
+      setLoadError('');
+      const row = await fetchProductByIdOrSlug(id, { bustCache });
+      setProduct(row || null);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.detail ||
+        err?.message ||
+        'Không tải được chi tiết sản phẩm';
+      setLoadError(String(msg));
+      console.error('Lỗi tải chi tiết sản phẩm', err);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    setLoading(true);
+    loadProduct();
+  }, [id, loadProduct]);
+
+  const stock = product ? Number(product.quantity ?? product.stock_quantity ?? 0) : 0;
+
+  useEffect(() => {
+    setBuyQty(1);
+  }, [id, product?.id]);
 
   // Track VIEW action when product data is loaded
   useEffect(() => {
@@ -44,12 +55,27 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    try {
-      await addToCart(product);
-      await trackBehavior(user?.id, product.id, 'add_to_cart');
-    } catch (e) {
-      console.error('Lỗi khi thêm vào giỏ', e);
+    if (!user) {
+      window.alert('Vui lòng đăng nhập để mua hàng');
+      return;
     }
+    const q = Math.min(Math.max(1, buyQty), Math.max(1, stock));
+    const res = await addToCart(product, q);
+    if (!res?.ok) {
+      window.alert(res?.error || 'Không thể thêm vào giỏ');
+      return;
+    }
+    await trackBehavior(user.id, product.id, 'add_to_cart');
+    setProduct((p) =>
+      p
+        ? {
+            ...p,
+            quantity: Math.max(0, Number(p.quantity ?? p.stock_quantity ?? 0) - q),
+            stock_quantity: Math.max(0, Number(p.quantity ?? p.stock_quantity ?? 0) - q),
+          }
+        : p
+    );
+    await loadProduct({ bustCache: true });
   };
 
   const handleWishlist = () => {
@@ -72,7 +98,25 @@ export default function ProductDetail() {
   }
 
   if (!product) {
-    return <div className="p-8 text-center text-red-500">Không tìm thấy sản phẩm.</div>;
+    return (
+      <div className="p-8 text-center space-y-3">
+        <div className="text-red-500 font-semibold">Không tìm thấy sản phẩm.</div>
+        <div className="text-xs text-gray-500">
+          Mã sản phẩm/slug: <span className="font-mono">{String(id)}</span>
+        </div>
+        {loadError && <div className="text-xs text-red-600">{loadError}</div>}
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            loadProduct({ bustCache: true });
+          }}
+          className="text-sm font-semibold text-blue-600 hover:underline"
+        >
+          Thử tải lại
+        </button>
+      </div>
+    );
   }
 
   const formatPrice = (v) => Number(v || 0).toLocaleString('vi-VN');
@@ -99,8 +143,12 @@ export default function ProductDetail() {
           <h1 className="text-3xl md:text-4xl font-black text-gray-800 mb-4 leading-tight">
             {product.title || product.name}
           </h1>
-          <p className="text-4xl font-black text-blue-600 mb-8">
+          <p className="text-4xl font-black text-blue-600 mb-2">
             {formatPrice(product.price)} ₫
+          </p>
+          <p className="text-sm font-semibold text-gray-600 mb-8">
+            Tồn kho:{' '}
+            <span className="text-gray-900">{product.quantity ?? product.stock_quantity ?? 0}</span> sản phẩm
           </p>
 
           <p className="text-gray-600 mb-8 leading-relaxed">
@@ -108,12 +156,42 @@ export default function ProductDetail() {
             Chi tiết mô tả sẽ được cập nhật thêm bởi nhà bán hàng.
           </p>
 
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-sm font-semibold text-gray-700">Số lượng</span>
+            <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setBuyQty((q) => Math.max(1, q - 1))}
+                className="w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm hover:text-blue-600"
+                aria-label="Giảm"
+              >
+                <Minus size={18} />
+              </button>
+              <span className="w-10 text-center font-bold text-gray-800">
+                {stock > 0 ? Math.min(buyQty, stock) : 0}
+              </span>
+              <button
+                type="button"
+                onClick={() => setBuyQty((q) => Math.min(Math.max(1, stock), q + 1))}
+                disabled={stock <= 0}
+                className="w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm hover:text-blue-600 disabled:opacity-40"
+                aria-label="Tăng"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+            {stock > 0 && (
+              <span className="text-xs text-gray-500">Tối đa theo tồn kho: {stock}</span>
+            )}
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <button 
               onClick={handleAddToCart}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+              disabled={stock <= 0}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
             >
-              <ShoppingCart size={20} /> Thêm vào giỏ
+              <ShoppingCart size={20} /> Mua ngay · Thêm vào giỏ
             </button>
             <button 
               onClick={handleWishlist}

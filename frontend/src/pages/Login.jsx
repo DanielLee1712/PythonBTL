@@ -3,6 +3,7 @@ import { User, Lock, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useStore } from '../store/useStore';
+import { customersApiBase } from '../config';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -18,7 +19,7 @@ export default function Login() {
     setError('');
     
     try {
-      const res = await axios.post('http://localhost:8080/api/customers/api/accounts/login/', {
+      const res = await axios.post(`${customersApiBase}/api/accounts/login/`, {
         username,
         password
       });
@@ -27,6 +28,7 @@ export default function Login() {
       // Store token (optional, depending on auth strategy)
       localStorage.setItem('access_token', token);
       if (res.data.refresh) localStorage.setItem('refresh_token', res.data.refresh);
+      localStorage.setItem('username', username);
 
       // Decode JWT to extract user info
       const payloadBase64 = token.split('.')[1];
@@ -84,7 +86,7 @@ export default function Login() {
             <div className="space-y-1">
               <div className="flex items-center justify-between ml-1">
                 <label className="text-sm font-medium text-gray-700" htmlFor="password">Mật khẩu</label>
-                <Link to="/forgot-password" className="text-xs text-blue-600 hover:text-blue-800 transition-colors">Quên mật khẩu?</Link>
+                <span className="text-xs text-gray-400">Bảo mật tài khoản</span>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
