@@ -16,7 +16,7 @@ class VariantInline(admin.TabularInline):
 
 @admin.register(ProductModel)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'brand', 'price', 'is_active', 'created_at']
+    list_display = ['name', 'category', 'brand', 'price', 'stock_quantity', 'is_active', 'created_at']
     list_filter = ['is_active', 'category', 'brand', 'product_type']
     search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}

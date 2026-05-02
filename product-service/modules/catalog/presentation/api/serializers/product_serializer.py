@@ -28,11 +28,12 @@ class ProductListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for product listings."""
     category_name = serializers.CharField(source='category.name', read_only=True, default=None)
     brand_name = serializers.CharField(source='brand.name', read_only=True, default=None)
+    quantity = serializers.IntegerField(source='stock_quantity', read_only=True)
 
     class Meta:
         model = ProductModel
         fields = [
-            'id', 'name', 'slug', 'price', 'category', 'category_name',
+            'id', 'name', 'slug', 'price', 'quantity', 'category', 'category_name',
             'brand', 'brand_name', 'image_url', 'is_active', 'created_at'
         ]
 
@@ -43,11 +44,12 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True, default=None)
     brand_name = serializers.CharField(source='brand.name', read_only=True, default=None)
     product_type_name = serializers.CharField(source='product_type.name', read_only=True, default=None)
+    quantity = serializers.IntegerField(source='stock_quantity', read_only=True)
 
     class Meta:
         model = ProductModel
         fields = [
-            'id', 'name', 'slug', 'description', 'price',
+            'id', 'name', 'slug', 'description', 'price', 'quantity',
             'category', 'category_name',
             'brand', 'brand_name',
             'product_type', 'product_type_name',

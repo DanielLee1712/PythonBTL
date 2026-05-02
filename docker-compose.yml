@@ -29,6 +29,20 @@ services:
     volumes:
       - cart_mysql_data:/var/lib/mysql
 
+  order_db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: order_db
+      MYSQL_USER: shop_user
+      MYSQL_PASSWORD: shop_password
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_AUTHENTICATION_PLUGIN_DEFAULT: mysql_native_password
+    ports:
+      - "3309:3306"
+    volumes:
+      - order_mysql_data:/var/lib/mysql
+
   product_db:
     image: postgres:15-alpine
     restart: always
@@ -128,8 +142,65 @@ services:
       - DB_USER=shop_user
       - DB_PASS=shop_password
       - DB_PORT=3306
+      - PRODUCT_SERVICE_BASE_URL=http://product-service:8001
+      - ORDER_SERVICE_BASE_URL=http://order-service:8005
     depends_on:
       - cart_db
+      - product-service
+      - order-service
+
+  shipping-service:
+    build: ./shipping-service
+    command: sh -c "sleep 15 && python manage.py migrate && python manage.py runserver 0.0.0.0:8007"
+    volumes:
+      - ./shipping-service:/app
+    ports:
+      - "8007:8007"
+
+  order-service:
+    build: ./order-service
+    command: sh -c "sleep 15 && python manage.py migrate && python manage.py runserver 0.0.0.0:8005"
+    volumes:
+      - ./order-service:/app
+    ports:
+      - "8005:8005"
+    environment:
+      - DB_HOST=order_db
+      - DB_NAME=order_db
+      - DB_USER=shop_user
+      - DB_PASS=shop_password
+      - DB_PORT=3306
+      - PRODUCT_SERVICE_BASE_URL=http://product-service:8001
+      - SHIPPING_SERVICE_BASE_URL=http://shipping-service:8007
+    depends_on:
+      - order_db
+      - product-service
+      - shipping-service
+
+  payment-service:
+    build: ./payment-service
+    command: sh -c "sleep 18 && python manage.py migrate && python manage.py runserver 0.0.0.0:8006"
+    volumes:
+      - ./payment-service:/app
+    ports:
+      - "8006:8006"
+    environment:
+      - ORDER_SERVICE_BASE_URL=http://order-service:8005
+      - VNPAY_TMN_CODE=${VNPAY_TMN_CODE:-}
+      - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET:-}
+      - VNPAY_RETURN_URL=${VNPAY_RETURN_URL:-http://localhost:8080/api/payment/api/v1/payments/vnpay/return/}
+      - VNPAY_FRONTEND_URL=${VNPAY_FRONTEND_URL:-http://localhost:5173/}
+      - VNPAY_PAY_URL=${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      - VNPAY_IPN_URL=${VNPAY_IPN_URL:-http://localhost:8080/api/payment/api/v1/payments/vnpay/ipn/}
+      - VNPAY_VERSION=${VNPAY_VERSION:-}
+      - VNPAY_COMMAND=${VNPAY_COMMAND:-}
+      - VNPAY_LOCALE=${VNPAY_LOCALE:-}
+      - VNPAY_CURR_CODE=${VNPAY_CURR_CODE:-}
+      - VNPAY_ORDER_TYPE=${VNPAY_ORDER_TYPE:-}
+      - VNPAY_IP_ADDR_FALLBACK=${VNPAY_IP_ADDR_FALLBACK:-}
+      - VNPAY_INCLUDE_LOCAL_IPN=${VNPAY_INCLUDE_LOCAL_IPN:-}
+    depends_on:
+      - order-service
 
   api-gateway:
     build: ./api-gateway
@@ -143,9 +214,13 @@ services:
       - product-service
       - ai-service
       - cart-service
+      - order-service
+      - payment-service
+      - shipping-service
 
 volumes:
   mysql_data:
   cart_mysql_data:
+  order_mysql_data:
   product_postgres_data:
   neo4j_data:

@@ -441,6 +441,7 @@ class Command(BaseCommand):
                     'brand': brand,
                     'attributes': p['attributes'],
                     'image_url': '',
+                    'stock_quantity': 100,
                 }
             )
             self.stdout.write(f"  {'Created' if created else 'Exists'}: {p['name']}")

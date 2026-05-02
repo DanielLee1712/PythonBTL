@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useStore } from '../store/useStore';
-import { Trash2, Plus, Minus, ArrowRight, Sparkles, TrendingUp, CheckCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Trash2, Plus, Minus, ArrowRight, Sparkles, TrendingUp } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AI_SERVICE_URL, PRODUCT_SERVICE_URL } from '../config';
+import { fetchProductsByIds, pickProductRow } from '../utils/productRefresh';
 import ProductCard from '../components/ProductCard';
-import { trackBehavior } from '../utils/tracking';
-
 export default function Cart() {
+  const navigate = useNavigate();
   const user = useStore((state) => state.user);
   const cart = useStore((state) => state.cart);
   const removeFromCart = useStore((state) => state.removeFromCart);
@@ -14,18 +15,17 @@ export default function Cart() {
   const clearCart = useStore((state) => state.clearCart);
 
   const [recommended, setRecommended] = useState([]);
-  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
   useEffect(() => {
     if (cart.length > 0) {
       const lastItem = cart[cart.length - 1];
-      axios.get(`http://localhost:8002/api/ai/graph/products/${lastItem.id}/similar/?k=8`)
+      axios.get(`${AI_SERVICE_URL}/api/ai/graph/products/${lastItem.id}/similar/?k=8`)
         .then(res => {
           const similar = res.data.similar_products || [];
           const ids = similar.map(item => item.product_id);
           
           if (ids.length > 0) {
-            axios.get(`http://localhost:8001/api/v1/products/?ids=${ids.join(',')}`)
+            axios.get(`${PRODUCT_SERVICE_URL}/api/v1/products/?ids=${ids.join(',')}`)
               .then(pRes => {
                 const fetchedProducts = pRes.data.results || pRes.data;
                 const filtered = fetchedProducts.filter(p => !cart.find(c => c.id === p.id));
@@ -41,36 +41,38 @@ export default function Cart() {
     }
   }, [cart]);
 
+  const refreshProductById = useCallback((productId, opts = {}) => {
+    const pid = Number(productId);
+    const delta = Number(opts?.delta || 0);
+    if (Number.isFinite(pid) && delta) {
+      setRecommended((prev) =>
+        prev.map((p) => {
+          if (Number(p.id) !== pid) return p;
+          const cur = Number(p.quantity ?? p.stock_quantity ?? 0);
+          const next = Math.max(0, cur + delta);
+          return { ...p, quantity: next, stock_quantity: next };
+        })
+      );
+    }
+
+    fetchProductsByIds(productId, { bustCache: opts?.bustCache ?? true })
+      .then((rows) => {
+        const updated = pickProductRow(rows, productId);
+        if (!updated) return;
+        setRecommended((prev) =>
+          prev.map((p) => (Number(p.id) === pid ? { ...p, ...updated } : p))
+        );
+      })
+      .catch(() => {});
+  }, []);
+
   const total = cart.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
   const formatPrice = (v) => Number(v || 0).toLocaleString('vi-VN');
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!user || cart.length === 0) return;
-    
-    // Gửi event purchase cho từng món hàng trong giỏ
-    for (const item of cart) {
-      await trackBehavior(user.id, item.id, 'purchase');
-    }
-    
-    // Xoá giỏ hàng sau khi mua
-    await clearCart();
-    setCheckoutSuccess(true);
+    navigate('/checkout');
   };
-
-  if (checkoutSuccess) {
-    return (
-      <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100 max-w-3xl mx-auto">
-        <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="text-green-500" size={48} />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Thanh toán thành công!</h2>
-        <p className="text-gray-500 mb-8">Đơn hàng của bạn đã được ghi nhận. Hệ thống AI đã lưu lịch sử mua hàng của bạn.</p>
-        <Link to="/" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition-colors">
-          Tiếp tục mua sắm <ArrowRight size={18} />
-        </Link>
-      </div>
-    );
-  }
 
   if (cart.length === 0) {
     return (
@@ -111,14 +113,20 @@ export default function Cart() {
               
               <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-lg">
                 <button 
-                  onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                  onClick={async () => {
+                    const r = await updateQuantity(item.id, Math.max(1, item.quantity - 1));
+                    if (r && !r.ok) window.alert(r.error || 'Cập nhật thất bại');
+                  }}
                   className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:text-blue-600"
                 >
                   <Minus size={16} />
                 </button>
                 <span className="w-8 text-center font-bold text-gray-700">{item.quantity}</span>
                 <button 
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                  onClick={async () => {
+                    const r = await updateQuantity(item.id, item.quantity + 1);
+                    if (r && !r.ok) window.alert(r.error || 'Cập nhật thất bại');
+                  }}
                   className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:text-blue-600"
                 >
                   <Plus size={16} />
@@ -174,7 +182,9 @@ export default function Cart() {
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
-            {recommended.map(p => <ProductCard p={p} key={`cart-rec-${p.id}`} />)}
+            {recommended.map((p) => (
+              <ProductCard p={p} key={`cart-rec-${p.id}`} onAfterAddToCart={refreshProductById} />
+            ))}
           </div>
         </section>
       )}

@@ -15,6 +15,10 @@ class ProductModel(models.Model):
     slug = models.SlugField(max_length=255, unique=True, allow_unicode=True)
     description = models.TextField(blank=True, default='')
     price = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    stock_quantity = models.PositiveIntegerField(
+        default=100,
+        help_text='Sellable stock; decreases when items are reserved in carts / orders.',
+    )
     category = models.ForeignKey(
         CategoryModel,
         on_delete=models.SET_NULL,
