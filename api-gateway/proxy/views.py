@@ -1,6 +1,8 @@
 import requests
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+import os
+import jwt
 
 # Define the service mapping
 SERVICES = {
@@ -13,10 +15,38 @@ SERVICES = {
     'shipping': 'http://shipping-service:8007',
 }
 
+def _require_staff(request):
+    auth = request.headers.get("Authorization") or request.META.get("HTTP_AUTHORIZATION") or ""
+    if not auth.lower().startswith("bearer "):
+        return False, JsonResponse({"detail": "Missing Bearer token"}, status=401)
+    token = auth.split(" ", 1)[1].strip()
+    key = os.environ.get("JWT_SIGNING_KEY") or ""
+    if not key:
+        return False, JsonResponse({"detail": "JWT_SIGNING_KEY not configured"}, status=500)
+    try:
+        payload = jwt.decode(token, key, algorithms=["HS256"])
+    except Exception:
+        return False, JsonResponse({"detail": "Invalid token"}, status=401)
+    if not (payload.get("is_staff") or payload.get("is_admin")):
+        return False, JsonResponse({"detail": "Forbidden"}, status=403)
+    return True, None
+
 @csrf_exempt
 def proxy_view(request, service_name, path):
     if service_name not in SERVICES:
         return JsonResponse({'error': 'Service not found'}, status=404)
+
+    # Staff-only endpoints (enforced at gateway)
+    # - Stock adjustment
+    # - Product CRUD (write methods)
+    if service_name == "products":
+        p = str(path)
+        is_adjust_stock = p.startswith("api/v1/products/adjust-stock/")
+        is_product_write = p.startswith("api/v1/products/") and request.method in ("POST", "PUT", "PATCH", "DELETE")
+        if is_adjust_stock or is_product_write:
+            ok, resp = _require_staff(request)
+            if not ok:
+                return resp
         
     target_url = f"{SERVICES[service_name]}/{path}"
     

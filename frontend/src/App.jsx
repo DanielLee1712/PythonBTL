@@ -10,6 +10,7 @@ import OrderList from './pages/OrderList';
 import OrderDetail from './pages/OrderDetail';
 import VnpayReturn from './pages/VnpayReturn';
 import Checkout from './pages/Checkout';
+import Staff from './pages/Staff';
 import Chatbot from './components/Chatbot';
 import { useStore } from './store/useStore';
 import { ShoppingCart, LogOut } from 'lucide-react';
@@ -47,6 +48,9 @@ function App() {
                 <Link to="/products" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Sản phẩm</Link>
                 {user && (
                   <Link to="/orders" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Đơn hàng</Link>
+                )}
+                {(user?.isStaff || user?.isAdmin) && (
+                  <Link to="/staff" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Staff</Link>
                 )}
               </nav>
 
@@ -90,6 +94,7 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/orders" element={<OrderList />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/staff" element={<Staff />} />
             <Route path="/vnpay-return" element={<VnpayReturn />} />
           </Routes>
         </main>

@@ -21,8 +21,10 @@ function decodeUserFromToken(token) {
     const savedUsername =
       typeof localStorage !== 'undefined' ? localStorage.getItem('username') : null;
     const username = payload.username ?? payload.name ?? savedUsername ?? 'user';
+    const isStaff = Boolean(payload.is_staff ?? payload.staff ?? false);
+    const isAdmin = Boolean(payload.is_admin ?? payload.is_superuser ?? payload.admin ?? false);
     if (!id) return null;
-    return { id: Number(id), username: String(username) };
+    return { id: Number(id), username: String(username), isStaff, isAdmin };
   } catch {
     return null;
   }

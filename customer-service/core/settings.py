@@ -122,3 +122,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# Shared JWT signing key for other services / gateway verification.
+# If not set, falls back to Django SECRET_KEY (dev-only).
+SIMPLE_JWT = {
+    "SIGNING_KEY": os.environ.get("JWT_SIGNING_KEY", SECRET_KEY),
+}

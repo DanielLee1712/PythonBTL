@@ -229,11 +229,7 @@ export default function Home() {
               <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-purple-700">
                 Dành Riêng Cho Bạn
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">Gợi ý từ GNN + Sequence Model dựa trên lịch sử mua sắm</p>
             </div>
-            <span className="ml-auto text-xs bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full font-bold border border-purple-200 shadow-sm flex items-center gap-1">
-              <Sparkles size={10} /> Powered by AI
-            </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
             {recommended.map(p => <ProductCard p={p} key={`rec-${p.id}`} onAfterAddToCart={refreshProductById} />)}

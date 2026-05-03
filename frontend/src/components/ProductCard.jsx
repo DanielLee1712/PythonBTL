@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
@@ -8,6 +9,13 @@ export default function ProductCard({ p, onAfterAddToCart }) {
   const addToCart = useStore((state) => state.addToCart);
 
   const formatPrice = (v) => Number(v || 0).toLocaleString('vi-VN');
+  const img = (p?.image_url || '').trim();
+  const [imgError, setImgError] = useState(false);
+  const showImage = Boolean(img) && !imgError;
+  const fallbackLabel = useMemo(
+    () => (p?.category_name || 'SP').toString().slice(0, 10),
+    [p?.category_name]
+  );
 
   const handleAddToCart = async (product) => {
     const res = await addToCart(product);
@@ -24,9 +32,18 @@ export default function ProductCard({ p, onAfterAddToCart }) {
     <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1 group flex flex-col">
       <Link to={`/product/${p.id}`} className="block">
         <div className="h-48 bg-gray-100 flex items-center justify-center p-4">
-          <div className="text-gray-300 font-medium border-2 border-dashed border-gray-300 rounded-full w-32 h-32 flex items-center justify-center bg-white text-center text-sm">
-            {p.category_name || 'SP'}
-          </div>
+          {showImage ? (
+            <img
+              src={img}
+              alt={p.title || p.name || 'product'}
+              className="w-full h-full object-contain bg-white rounded-xl border"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="text-gray-300 font-medium border-2 border-dashed border-gray-300 rounded-full w-32 h-32 flex items-center justify-center bg-white text-center text-sm">
+              {fallbackLabel}
+            </div>
+          )}
         </div>
       </Link>
       <div className="p-5 flex flex-col flex-grow">
