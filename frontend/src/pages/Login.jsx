@@ -39,7 +39,12 @@ export default function Login() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
-      setUser({ id: payload.user_id, username: username });
+      setUser({
+        id: payload.user_id,
+        username: username,
+        isStaff: Boolean(payload.is_staff),
+        isAdmin: Boolean(payload.is_admin),
+      });
       navigate('/');
     } catch (err) {
       console.error('Login error:', err);

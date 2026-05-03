@@ -16,8 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from accounts.interactions import WishlistItemView, WishlistListView, RatingView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
+    path('api/interactions/wishlist/', WishlistListView.as_view(), name='wishlist'),
+    path('api/interactions/wishlist/<int:product_id>/', WishlistItemView.as_view(), name='wishlist-item'),
+    path('api/interactions/ratings/', RatingView.as_view(), name='ratings'),
 ]

@@ -4,16 +4,22 @@ import { useStore } from '../store/useStore';
 import { fetchProductByIdOrSlug } from '../utils/productRefresh';
 import { trackBehavior } from '../utils/tracking';
 import { ShoppingCart, Heart, Star, ArrowLeft, Plus, Minus } from 'lucide-react';
+import axios from 'axios';
+import { interactionsApiBase } from '../config';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [imgError, setImgError] = useState(false);
   const [rating, setRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
   const [buyQty, setBuyQty] = useState(1);
+  const [avgRating, setAvgRating] = useState(null);
+  const [ratingCount, setRatingCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   const user = useStore((state) => state.user);
   const addToCart = useStore((state) => state.addToCart);
@@ -53,6 +59,36 @@ export default function ProductDetail() {
     }
   }, [user, product]);
 
+  useEffect(() => {
+    if (!user || !product) return;
+    // Load wishlist + rating state from customer-service (MVP dev API)
+    axios
+      .get(`${interactionsApiBase}/wishlist/`, { params: { user_id: user.id, _: Date.now() } })
+      .then((res) => {
+        const ids = res.data?.product_ids || [];
+        setInWishlist(ids.includes(Number(product.id)));
+      })
+      .catch(() => {});
+
+    axios
+      .get(`${interactionsApiBase}/ratings/`, {
+        params: { user_id: user.id, product_id: product.id, _: Date.now() },
+      })
+      .then((res) => {
+        const d = res.data || {};
+        setRating(d.user_rating || 0);
+        setHasRated(Boolean(d.user_rating));
+        setAvgRating(d.avg_rating);
+        setRatingCount(d.rating_count || 0);
+        setWishlistCount(d.wishlist_count || 0);
+      })
+      .catch(() => {});
+  }, [user, product?.id]);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [product?.image_url, product?.id]);
+
   const handleAddToCart = async () => {
     if (!product) return;
     if (!user) {
@@ -78,19 +114,46 @@ export default function ProductDetail() {
     await loadProduct({ bustCache: true });
   };
 
-  const handleWishlist = () => {
+  const handleWishlist = async () => {
     if (!user || !product) return;
-    setInWishlist(!inWishlist);
-    if (!inWishlist) {
-      trackBehavior(user.id, product.id, 'wishlist');
+    const next = !inWishlist;
+    setInWishlist(next);
+    try {
+      if (next) {
+        await axios.post(`${interactionsApiBase}/wishlist/`, {
+          user_id: user.id,
+          product_id: product.id,
+        });
+        setWishlistCount((c) => c + 1);
+        trackBehavior(user.id, product.id, 'wishlist');
+      } else {
+        await axios.delete(`${interactionsApiBase}/wishlist/${product.id}/`, {
+          params: { user_id: user.id },
+        });
+        setWishlistCount((c) => Math.max(0, c - 1));
+      }
+    } catch {
+      // revert on error
+      setInWishlist(!next);
     }
   };
 
-  const handleRate = (stars) => {
+  const handleRate = async (stars) => {
     if (!user || !product) return;
     setRating(stars);
     setHasRated(true);
-    trackBehavior(user.id, product.id, 'rate');
+    try {
+      const res = await axios.post(`${interactionsApiBase}/ratings/`, {
+        user_id: user.id,
+        product_id: product.id,
+        rating: stars,
+      });
+      setAvgRating(res.data?.avg_rating ?? null);
+      setRatingCount(res.data?.rating_count ?? 0);
+      trackBehavior(user.id, product.id, 'rate');
+    } catch {
+      // keep UI state; MVP
+    }
   };
 
   if (loading) {
@@ -120,6 +183,8 @@ export default function ProductDetail() {
   }
 
   const formatPrice = (v) => Number(v || 0).toLocaleString('vi-VN');
+  const img = (product?.image_url || '').trim();
+  const showImage = Boolean(img) && !imgError;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -128,11 +193,19 @@ export default function ProductDetail() {
       </Link>
       
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
-        {/* Product Image Placeholder */}
         <div className="md:w-1/2 bg-gray-100 p-12 flex items-center justify-center min-h-[400px]">
-           <div className="text-gray-300 font-bold border-4 border-dashed border-gray-300 rounded-full w-48 h-48 flex items-center justify-center bg-white text-2xl">
-            {product.category_name || 'SP'}
-          </div>
+          {showImage ? (
+            <img
+              src={img}
+              alt={product.title || product.name || 'product'}
+              className="w-full h-full object-contain bg-white rounded-2xl border"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="text-gray-300 font-bold border-4 border-dashed border-gray-300 rounded-full w-48 h-48 flex items-center justify-center bg-white text-2xl">
+              {product.category_name || 'SP'}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
@@ -203,12 +276,19 @@ export default function ProductDetail() {
 
           <div className="border-t border-gray-100 pt-6">
             <p className="text-sm font-semibold text-gray-700 mb-3">Đánh giá sản phẩm này</p>
+            <p className="text-xs text-gray-500 mb-3">
+              Trung bình:{' '}
+              <span className="font-semibold text-gray-800">
+                {avgRating == null ? '—' : Number(avgRating).toFixed(1)}
+              </span>{' '}
+              ({ratingCount} lượt) · Yêu thích: <span className="font-semibold text-gray-800">{wishlistCount}</span>
+            </p>
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button 
                   key={star} 
                   onClick={() => handleRate(star)}
-                  disabled={hasRated}
+                  disabled={!user}
                   className={`transition-colors ${hasRated ? 'cursor-default' : 'hover:scale-110'}`}
                 >
                   <Star 
@@ -217,7 +297,7 @@ export default function ProductDetail() {
                   />
                 </button>
               ))}
-              {hasRated && <span className="ml-3 text-sm text-green-600 font-medium">Cảm ơn đánh giá của bạn!</span>}
+              {hasRated && <span className="ml-3 text-sm text-green-600 font-medium">Đã lưu đánh giá.</span>}
             </div>
           </div>
 
