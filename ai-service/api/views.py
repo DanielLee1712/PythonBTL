@@ -56,18 +56,66 @@ class TrackBehaviorView(APIView):
 
 class RecommendationView(APIView):
     def get(self, request, user_id):
+        product_service_url = os.environ.get(
+            "PRODUCT_SERVICE_PRODUCTS_URL",
+            "http://product-service:8001/api/v1/products/",
+        )
+
+        def fetch_existing_ids(ids):
+            if not ids:
+                return []
+            try:
+                url = f"{product_service_url}?{urllib.parse.urlencode({'ids': ','.join(map(str, ids)), 'page_size': 50})}"
+                req = urllib.request.Request(url, headers={"Accept": "application/json"})
+                with urllib.request.urlopen(req, timeout=4) as resp:
+                    raw = resp.read().decode("utf-8")
+                payload = json.loads(raw)
+                rows = payload.get("results", payload)
+                if not isinstance(rows, list):
+                    return []
+                return [str(p.get("id")) for p in rows if p.get("id") is not None]
+            except Exception as e:
+                logger.error("Product-service id validate failed: %s", e)
+                return []
+
+        def fetch_newest_ids(k=5):
+            try:
+                params = {"page_size": int(k), "ordering": "-created_at"}
+                url = f"{product_service_url}?{urllib.parse.urlencode(params)}"
+                req = urllib.request.Request(url, headers={"Accept": "application/json"})
+                with urllib.request.urlopen(req, timeout=4) as resp:
+                    raw = resp.read().decode("utf-8")
+                payload = json.loads(raw)
+                rows = payload.get("results", payload)
+                if not isinstance(rows, list):
+                    return []
+                return [str(p.get("id")) for p in rows if p.get("id") is not None][:k]
+            except Exception as e:
+                logger.error("Product-service newest fallback failed: %s", e)
+                return []
+
         # 1) DL ensemble → sequence model → FAISS fallback
-        recommendations = sequence_service.recommend_next_items(str(user_id), k=5)
+        recommendations = sequence_service.recommend_next_items(str(user_id), k=10)
 
         # 2) Fallback: vector similarity (FAISS) from precomputed user embedding
         if not recommendations:
             user_vector = ml_service.user_embeddings.get(str(user_id))
             if user_vector is not None:
-                recommendations = ml_service.search_faiss(user_vector, k=5)
+                recommendations = ml_service.search_faiss(user_vector, k=10)
             else:
                 recommendations = []
-            
-        return Response({'user_id': user_id, 'recommendations': recommendations}, status=status.HTTP_200_OK)
+
+        # 3) Filter out stale product ids (after reseed) and fill with newest
+        valid = fetch_existing_ids(recommendations)
+        if len(valid) < 5:
+            newest = fetch_newest_ids(k=10)
+            for pid in newest:
+                if pid not in valid:
+                    valid.append(pid)
+                if len(valid) >= 5:
+                    break
+
+        return Response({'user_id': user_id, 'recommendations': valid[:5]}, status=status.HTTP_200_OK)
 
 
 class ChatView(APIView):

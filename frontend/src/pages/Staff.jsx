@@ -47,7 +47,6 @@ export default function Staff() {
       adjustStock: `${GATEWAY_URL}/api/products/api/v1/products/adjust-stock/`,
       categories: `${GATEWAY_URL}/api/products/api/v1/categories/`,
       brands: `${GATEWAY_URL}/api/products/api/v1/brands/`,
-      productTypes: `${GATEWAY_URL}/api/products/api/v1/product-types/`,
     }),
     []
   );
@@ -69,26 +68,56 @@ export default function Staff() {
     is_active: true,
     category: '',
     brand: '',
-    product_type: '',
-    attributes: '{}',
   });
   const [stockTarget, setStockTarget] = useState('');
 
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [productTypes, setProductTypes] = useState([]);
+  const [brandName, setBrandName] = useState('');
+
+  const allowedCategorySlugs = useMemo(
+    () => new Set(['laptop', 'dien-thoai', 'phu-kien', 'dong-ho']),
+    []
+  );
+
+  const allowedBrandNames = useMemo(
+    () =>
+      new Set([
+        'Apple',
+        'Samsung',
+        'Dell',
+        'ASUS',
+        'HP',
+        'Lenovo',
+        'Xiaomi',
+        'Oppo',
+        'Daikin',
+        'Panasonic',
+        'LG',
+        'Anker',
+        'Baseus',
+        'Logitech',
+      ]),
+    []
+  );
 
   const loadMeta = async () => {
     if (!canAccess) return;
     try {
-      const [c, b, t] = await Promise.all([
+      const [c, b] = await Promise.all([
         axios.get(api.categories, { params: { page_size: 200, _: Date.now() } }),
         axios.get(api.brands, { params: { page_size: 200, _: Date.now() } }),
-        axios.get(api.productTypes, { params: { page_size: 200, _: Date.now() } }),
       ]);
-      setCategories(c.data?.results ?? c.data ?? []);
-      setBrands(b.data?.results ?? b.data ?? []);
-      setProductTypes(t.data?.results ?? t.data ?? []);
+      const rawCats = c.data?.results ?? c.data ?? [];
+      const filteredCats = Array.isArray(rawCats)
+        ? rawCats.filter((x) => allowedCategorySlugs.has(String(x?.slug || '').trim()))
+        : [];
+      setCategories(filteredCats);
+      const rawBrands = b.data?.results ?? b.data ?? [];
+      const filteredBrands = Array.isArray(rawBrands)
+        ? rawBrands.filter((x) => allowedBrandNames.has(String(x?.name || '').trim()))
+        : [];
+      setBrands(filteredBrands);
     } catch {
       // metadata is optional for basic CRUD
     }
@@ -133,10 +162,9 @@ export default function Staff() {
       is_active: true,
       category: '',
       brand: '',
-      product_type: '',
-      attributes: '{}',
     });
     setStockTarget('');
+    setBrandName('');
     setMsg('');
   };
 
@@ -158,10 +186,9 @@ export default function Staff() {
         is_active: Boolean(full.is_active),
         category: full.category ?? '',
         brand: full.brand ?? '',
-        product_type: full.product_type ?? '',
-        attributes: JSON.stringify(full.attributes ?? {}, null, 2),
       });
       setStockTarget(String(full.quantity ?? ''));
+      setBrandName(String(full.brand_name ?? ''));
     } catch (err) {
       const d2 = err.response?.data;
       setMsg(d2?.detail || d2?.error || err.message || 'Không tải được chi tiết sản phẩm');
@@ -170,11 +197,37 @@ export default function Staff() {
     }
   };
 
+  const resolveBrandId = async () => {
+    const name = brandName.trim();
+    if (!name) return null;
+
+    const existing = brands.find((b) => String(b?.name || '').toLowerCase() === name.toLowerCase());
+    if (existing?.id != null) return Number(existing.id);
+
+    // Create brand if missing
+    try {
+      const res = await axios.post(
+        api.brands,
+        { name, description: 'Electronics brand' },
+        { headers: authHeaders }
+      );
+      const created = res.data;
+      if (created?.id != null) {
+        setBrands((prev) => [{ id: created.id, name: created.name }, ...prev]);
+        return Number(created.id);
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  };
+
   const save = async (e) => {
     e.preventDefault();
     setBusy(true);
     setMsg('');
     try {
+      const brandIdResolved = await resolveBrandId();
       const payload = {
         name: form.name.trim(),
         description: form.description ?? '',
@@ -182,15 +235,9 @@ export default function Staff() {
         image_url: form.image_url ?? '',
         is_active: Boolean(form.is_active),
         category: form.category === '' ? null : Number(form.category),
-        brand: form.brand === '' ? null : Number(form.brand),
-        product_type: form.product_type === '' ? null : Number(form.product_type),
-        attributes: (() => {
-          try {
-            return JSON.parse(form.attributes || '{}');
-          } catch {
-            return {};
-          }
-        })(),
+        brand: brandIdResolved,
+        product_type: null,
+        attributes: {},
       };
 
       let saved = null;
@@ -453,34 +500,19 @@ export default function Staff() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Brand ID</label>
-                  <select
-                    value={form.brand}
-                    onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  >
-                    <option value="">(None)</option>
-                    {brands.map((b) => (
-                      <option key={`b-${b.id}`} value={String(b.id)}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Product Type ID</label>
-                  <select
-                    value={form.product_type}
-                    onChange={(e) => setForm((f) => ({ ...f, product_type: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  >
-                    <option value="">(None)</option>
-                    {productTypes.map((t) => (
-                      <option key={`t-${t.id}`} value={String(t.id)}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Brand</label>
+                  <input
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nhập brand (vd: Apple, Samsung, Anker...)"
+                  />
+                  {brands.length > 0 && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Gợi ý: {brands.slice(0, 10).map((b) => b.name).join(', ')}
+                      {brands.length > 10 ? '…' : ''}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Tồn kho (set giá trị)</label>
@@ -489,17 +521,7 @@ export default function Staff() {
                     value={stockTarget}
                     onChange={(e) => setStockTarget(e.target.value)}
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="(optional)"
                     min={0}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Attributes (JSON)</label>
-                  <textarea
-                    rows={5}
-                    value={form.attributes}
-                    onChange={(e) => setForm((f) => ({ ...f, attributes: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <label className="inline-flex items-center gap-2 text-sm text-gray-700">

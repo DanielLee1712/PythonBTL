@@ -1,19 +1,7 @@
 """
 Seed Categories - Management command to populate category tree.
 
-Category tree (from whiteboard):
-  Electronics (Điện tử)
-    ├── Laptop
-    ├── Mobile (Điện thoại)
-    ├── Điều hòa
-    └── Tủ lạnh
-  Thời trang
-    ├── Áo
-    ├── Quần
-    └── Giày dép
-  Mỹ phẩm
-    ├── Son môi
-    └── Kem nền
+This project is an electronics store. Seed only electronics categories.
 """
 from django.core.management.base import BaseCommand
 from modules.catalog.infrastructure.models.category_model import CategoryModel
@@ -24,26 +12,11 @@ CATEGORY_TREE = {
     'Electronics': {
         'description': 'Thiết bị điện tử',
         'children': [
-            {'name': 'Laptop', 'description': 'Máy tính xách tay'},
-            {'name': 'Mobile', 'description': 'Điện thoại di động'},
-            {'name': 'Điều hòa', 'description': 'Máy điều hòa không khí'},
-            {'name': 'Tủ lạnh', 'description': 'Tủ lạnh gia đình'},
-        ]
-    },
-    'Thời trang': {
-        'description': 'Quần áo và phụ kiện thời trang',
-        'children': [
-            {'name': 'Áo', 'description': 'Áo thời trang nam nữ'},
-            {'name': 'Quần', 'description': 'Quần thời trang nam nữ'},
-            {'name': 'Giày dép', 'description': 'Giày dép thời trang'},
-        ]
-    },
-    'Mỹ phẩm': {
-        'description': 'Sản phẩm làm đẹp và chăm sóc da',
-        'children': [
-            {'name': 'Son môi', 'description': 'Son môi các loại'},
-            {'name': 'Kem nền', 'description': 'Kem nền trang điểm'},
-        ]
+            {'name': 'Laptop', 'slug': 'laptop', 'description': 'Máy tính xách tay'},
+            {'name': 'Điện thoại', 'slug': 'dien-thoai', 'description': 'Điện thoại di động'},
+            {'name': 'Phụ kiện', 'slug': 'phu-kien', 'description': 'Phụ kiện điện tử'},
+            {'name': 'Đồng hồ', 'slug': 'dong-ho', 'description': 'Đồng hồ thông minh'},
+        ],
     },
 }
 
@@ -51,8 +24,20 @@ CATEGORY_TREE = {
 class Command(BaseCommand):
     help = 'Seed categories with tree structure'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--clear',
+            action='store_true',
+            help='Clear existing categories before seeding',
+        )
+
     def handle(self, *args, **options):
         self.stdout.write('Seeding categories...')
+
+        if options.get('clear'):
+            self.stdout.write('Clearing existing categories...')
+            CategoryModel.objects.all().delete()
+            self.stdout.write(self.style.SUCCESS('Cleared!'))
         
         order = 0
         for parent_name, data in CATEGORY_TREE.items():
@@ -70,7 +55,7 @@ class Command(BaseCommand):
 
             for child_order, child in enumerate(data['children']):
                 child_cat, child_created = CategoryModel.objects.get_or_create(
-                    slug=generate_slug(child['name']),
+                    slug=child.get('slug') or generate_slug(child['name']),
                     defaults={
                         'name': child['name'],
                         'description': child['description'],
