@@ -19,18 +19,12 @@ BRANDS = [
     {'name': 'Lenovo', 'description': 'Lenovo Group - ThinkPad, Legion, Yoga'},
     {'name': 'Xiaomi', 'description': 'Xiaomi Corporation - Smartphones, IoT'},
     {'name': 'Oppo', 'description': 'OPPO - Smartphones, Audio'},
-    {'name': 'Nike', 'description': 'Nike, Inc. - Sportswear and Footwear'},
-    {'name': 'Adidas', 'description': 'Adidas AG - Sportswear and Footwear'},
-    {'name': 'Puma', 'description': 'Puma SE - Sportswear and Footwear'},
-    {'name': "L'Oreal", 'description': "L'Oreal Paris - Beauty and Skincare"},
-    {'name': 'Maybelline', 'description': 'Maybelline New York - Cosmetics'},
-    {'name': 'MAC', 'description': 'M·A·C Cosmetics - Professional Makeup'},
     {'name': 'Daikin', 'description': 'Daikin Industries - Air Conditioning'},
     {'name': 'Panasonic', 'description': 'Panasonic Holdings - Home Appliances'},
     {'name': 'LG', 'description': 'LG Electronics - Home Appliances, Display'},
-    {'name': 'Uniqlo', 'description': 'Uniqlo Co., Ltd. - Casual Wear'},
-    {'name': 'Levi\'s', 'description': 'Levi Strauss & Co. - Denim and Jeans'},
-    {'name': 'Estee Lauder', 'description': 'The Estée Lauder Companies - Luxury Beauty'},
+    {'name': 'Anker', 'description': 'Anker Innovations - Chargers, Cables, Accessories'},
+    {'name': 'Baseus', 'description': 'Baseus - Accessories and Charging'},
+    {'name': 'Logitech', 'description': 'Logitech - Mouse, Keyboard, Peripherals'},
 ]
 
 PRODUCT_TYPES = [
@@ -53,19 +47,19 @@ PRODUCT_TYPES = [
         }
     },
     {
-        'name': 'Quần áo',
+        'name': 'Phụ kiện',
         'attribute_schema': {
-            'size': {'type': 'string', 'required': True},
-            'color': {'type': 'string', 'required': True},
-            'material': {'type': 'string', 'required': False},
+            'type': {'type': 'string', 'required': True},
+            'compatibility': {'type': 'string', 'required': False},
+            'color': {'type': 'string', 'required': False},
         }
     },
     {
-        'name': 'Mỹ phẩm',
+        'name': 'Đồng hồ',
         'attribute_schema': {
-            'shade': {'type': 'string', 'required': False},
-            'volume': {'type': 'string', 'required': False},
-            'skin_type': {'type': 'string', 'required': False},
+            'size': {'type': 'string', 'required': False},
+            'battery': {'type': 'string', 'required': False},
+            'water_resistance': {'type': 'string', 'required': False},
         }
     },
 ]
@@ -120,12 +114,12 @@ PRODUCTS = [
         'attributes': {'ram': '32GB', 'cpu': 'Intel i7-1355U', 'storage': '1TB SSD', 'screen_size': '14 inch'},
         'variants': []
     },
-    # Electronics - Mobile
+    # Electronics - Điện thoại
     {
         'name': 'iPhone 15 Pro Max',
         'description': 'Apple iPhone 15 Pro Max - Khung viền Titanium, USB-C',
         'price': 34990000,
-        'category_slug': 'mobile',
+        'category_slug': 'dien-thoai',
         'brand_name': 'Apple',
         'attributes': {'ram': '8GB', 'storage': '256GB', 'screen_size': '6.7 inch', 'camera': '48MP'},
         'variants': [
@@ -136,9 +130,9 @@ PRODUCTS = [
     },
     {
         'name': 'Samsung Galaxy S24 Ultra',
-        'description': 'Samsung Galaxy S24 Ultra - Đỉnh cao công nghệ AI',
+        'description': 'Samsung Galaxy S24 Ultra - Camera mạnh, hiệu năng cao',
         'price': 31990000,
-        'category_slug': 'mobile',
+        'category_slug': 'dien-thoai',
         'brand_name': 'Samsung',
         'attributes': {'ram': '12GB', 'storage': '256GB', 'screen_size': '6.8 inch', 'camera': '200MP'},
         'variants': []
@@ -147,7 +141,7 @@ PRODUCTS = [
         'name': 'Xiaomi 14 Pro',
         'description': 'Xiaomi 14 Pro - Ống kính Leica thế hệ mới',
         'price': 18990000,
-        'category_slug': 'mobile',
+        'category_slug': 'dien-thoai',
         'brand_name': 'Xiaomi',
         'attributes': {'ram': '12GB', 'storage': '256GB', 'screen_size': '6.73 inch', 'camera': '50MP'},
         'variants': []
@@ -156,227 +150,134 @@ PRODUCTS = [
         'name': 'Oppo Find X7 Ultra',
         'description': 'Oppo Find X7 Ultra - Camera Hasselblad cực đỉnh',
         'price': 21990000,
-        'category_slug': 'mobile',
+        'category_slug': 'dien-thoai',
         'brand_name': 'Oppo',
         'attributes': {'ram': '16GB', 'storage': '512GB', 'screen_size': '6.82 inch', 'camera': '50MP Quad'},
         'variants': []
     },
-    # Electronics - Điều hòa
+    # Electronics - Phụ kiện
     {
-        'name': 'Daikin Inverter 1.5HP FTKC35VVMV',
-        'description': 'Điều hòa Daikin Inverter 1.5HP lọc bụi mịn PM2.5',
-        'price': 13490000,
-        'category_slug': 'dieu-hoa',
-        'brand_name': 'Daikin',
-        'attributes': {'capacity': '1.5HP', 'type': 'Inverter', 'gas': 'R32'},
+        'name': 'Anker 735 Charger (GaNPrime 65W)',
+        'description': 'Sạc nhanh GaN 65W gọn nhẹ cho laptop/điện thoại',
+        'price': 1290000,
+        'category_slug': 'phu-kien',
+        'brand_name': 'Anker',
+        'attributes': {'type': 'Charger', 'compatibility': 'USB-C PD', 'color': 'Black'},
         'variants': []
     },
     {
-        'name': 'Panasonic Inverter 1HP CU/CS-PU9WKH-8M',
-        'description': 'Điều hòa Panasonic Inverter 1HP công nghệ Nanoe-G',
-        'price': 9990000,
-        'category_slug': 'dieu-hoa',
-        'brand_name': 'Panasonic',
-        'attributes': {'capacity': '1HP', 'type': 'Inverter', 'technology': 'Nanoe-G'},
-        'variants': []
-    },
-    # Electronics - Tủ lạnh
-    {
-        'name': 'Samsung Bespoke 4 Cửa',
-        'description': 'Tủ lạnh Samsung Bespoke thiết kế sang trọng, hiện đại',
-        'price': 45990000,
-        'category_slug': 'tu-lanh',
-        'brand_name': 'Samsung',
-        'attributes': {'capacity': '599L', 'type': 'Multi Door', 'feature': 'Bespoke Design'},
+        'name': 'Baseus USB-C Cable 100W',
+        'description': 'Cáp sạc USB-C 100W bền chắc, hỗ trợ PD',
+        'price': 189000,
+        'category_slug': 'phu-kien',
+        'brand_name': 'Baseus',
+        'attributes': {'type': 'Cable', 'compatibility': 'USB-C PD', 'color': 'Black'},
         'variants': []
     },
     {
-        'name': 'LG Inverter Side by Side 635L',
-        'description': 'Tủ lạnh LG Side by Side dung tích lớn, tiết kiệm điện',
-        'price': 22990000,
-        'category_slug': 'tu-lanh',
-        'brand_name': 'LG',
-        'attributes': {'capacity': '635L', 'type': 'Side by Side', 'technology': 'Inverter Linear'},
-        'variants': []
-    },
-    # Thời trang - Áo
-    {
-        'name': 'Nike Dri-FIT Academy',
-        'description': 'Áo bóng đá Nike Dri-FIT Academy thoải mái vận động',
-        'price': 750000,
-        'category_slug': 'ao',
-        'brand_name': 'Nike',
-        'attributes': {'size': 'M', 'color': 'Navy Blue', 'material': 'Polyester'},
-        'variants': [
-            {'name': 'S - Blue', 'stock': 100, 'attributes': {'size': 'S'}},
-            {'name': 'M - Blue', 'stock': 150, 'attributes': {'size': 'M'}},
-            {'name': 'L - Blue', 'stock': 100, 'attributes': {'size': 'L'}},
-        ]
-    },
-    {
-        'name': 'Adidas Essentials 3-Stripes Tee',
-        'description': 'Áo thun Adidas Essentials phong cách cổ điển',
-        'price': 650000,
-        'category_slug': 'ao',
-        'brand_name': 'Adidas',
-        'attributes': {'size': 'L', 'color': 'White', 'material': 'Cotton'},
-        'variants': []
-    },
-    {
-        'name': 'Uniqlo AIRism Cotton T-Shirt',
-        'description': 'Áo thun Uniqlo AIRism công nghệ làm mát',
-        'price': 399000,
-        'category_slug': 'ao',
-        'brand_name': 'Uniqlo',
-        'attributes': {'size': 'M', 'color': 'Black', 'material': 'AIRism Cotton'},
-        'variants': []
-    },
-    # Thời trang - Quần
-    {
-        'name': 'Levi\'s 501 Original Fit Jeans',
-        'description': 'Quần jeans Levi\'s 501 huyền thoại, phong cách bền bỉ',
-        'price': 2290000,
-        'category_slug': 'quan',
-        'brand_name': 'Levi\'s',
-        'attributes': {'size': '32', 'color': 'Indigo', 'material': 'Denim'},
-        'variants': []
-    },
-    {
-        'name': 'Adidas Tiro Track Pants',
-        'description': 'Quần thể thao Adidas Tiro thoải mái, năng động',
-        'price': 1200000,
-        'category_slug': 'quan',
-        'brand_name': 'Adidas',
-        'attributes': {'size': 'L', 'color': 'Black', 'material': 'Recycled Polyester'},
-        'variants': []
-    },
-    # Thời trang - Giày dép
-    {
-        'name': 'Nike Air Force 1 \'07',
-        'description': 'Giày Nike Air Force 1 \'07 - Biểu tượng thời trang đường phố',
-        'price': 2990000,
-        'category_slug': 'giay-dep',
-        'brand_name': 'Nike',
-        'attributes': {'size': '42', 'color': 'White', 'material': 'Leather'},
-        'variants': [
-            {'name': 'Size 40', 'stock': 20, 'attributes': {'size': '40'}},
-            {'name': 'Size 41', 'stock': 30, 'attributes': {'size': '41'}},
-            {'name': 'Size 42', 'stock': 50, 'attributes': {'size': '42'}},
-        ]
-    },
-    {
-        'name': 'Adidas Ultraboost Light',
-        'description': 'Giày chạy bộ Adidas Ultraboost Light cực nhẹ',
-        'price': 4500000,
-        'category_slug': 'giay-dep',
-        'brand_name': 'Adidas',
-        'attributes': {'size': '41', 'color': 'Black/Sol Red', 'material': 'Primeknit'},
-        'variants': []
-    },
-    {
-        'name': 'Puma Cali Star',
-        'description': 'Giày sneaker Puma Cali Star nữ tính và phong cách',
-        'price': 2100000,
-        'category_slug': 'giay-dep',
-        'brand_name': 'Puma',
-        'attributes': {'size': '37', 'color': 'White/Gold', 'material': 'Synthetic Leather'},
-        'variants': []
-    },
-    # Mỹ phẩm - Son môi
-    {
-        'name': "MAC Matte Lipstick",
-        'description': "Son thỏi MAC Matte Lipstick - màu sắc chuẩn, lâu trôi",
-        'price': 550000,
-        'category_slug': 'son-moi',
-        'brand_name': 'MAC',
-        'attributes': {'shade': 'Ruby Woo', 'type': 'Matte'},
-        'variants': [
-            {'name': 'Ruby Woo', 'stock': 100, 'attributes': {'shade': 'Ruby Woo'}},
-            {'name': 'Chili', 'stock': 80, 'attributes': {'shade': 'Chili'}},
-            {'name': 'Russian Red', 'stock': 60, 'attributes': {'shade': 'Russian Red'}},
-        ]
-    },
-    {
-        'name': "Maybelline SuperStay Matte Ink",
-        'description': "Son kem lì Maybelline SuperStay Matte Ink giữ màu 16h",
-        'price': 205000,
-        'category_slug': 'son-moi',
-        'brand_name': 'Maybelline',
-        'attributes': {'shade': '117 Ground-Breaker', 'type': 'Liquid Matte'},
-        'variants': []
-    },
-    # Mỹ phẩm - Kem nền
-    {
-        'name': "Estee Lauder Double Wear",
-        'description': "Kem nền Estee Lauder Double Wear Stay-in-Place cực bám",
-        'price': 1450000,
-        'category_slug': 'kem-nen',
-        'brand_name': 'Estee Lauder',
-        'attributes': {'shade': '1W1 Bone', 'spf': '10'},
-        'variants': []
-    },
-    {
-        'name': "L'Oreal Infallible 24H Fresh Wear",
-        'description': "Kem nền L'Oreal Infallible lâu trôi, mỏng nhẹ",
-        'price': 350000,
-        'category_slug': 'kem-nen',
-        'brand_name': "L'Oreal",
-        'attributes': {'shade': '120 Vanilla', 'spf': '25'},
+        'name': 'Logitech MX Master 3S',
+        'description': 'Chuột không dây cao cấp Logitech MX Master 3S',
+        'price': 2490000,
+        'category_slug': 'phu-kien',
+        'brand_name': 'Logitech',
+        'attributes': {'type': 'Mouse', 'compatibility': 'Windows/macOS', 'color': 'Graphite'},
         'variants': []
     },
 
-    # Bo sung them 25 san pham that theo cung mau
-    # Electronics - Laptop
+    # Electronics - Đồng hồ
+    {
+        'name': 'Apple Watch Series 9 GPS 45mm',
+        'description': 'Apple Watch Series 9 theo dõi sức khỏe, thể thao',
+        'price': 10990000,
+        'category_slug': 'dong-ho',
+        'brand_name': 'Apple',
+        'attributes': {'size': '45mm', 'battery': 'Up to 18 hours', 'water_resistance': '50m'},
+        'variants': []
+    },
+    {
+        'name': 'Samsung Galaxy Watch6 44mm',
+        'description': 'Samsung Galaxy Watch6 theo dõi sức khỏe, ngủ, tập luyện',
+        'price': 6990000,
+        'category_slug': 'dong-ho',
+        'brand_name': 'Samsung',
+        'attributes': {'size': '44mm', 'battery': 'Up to 40 hours', 'water_resistance': '5ATM'},
+        'variants': []
+    },
+
+    # More electronics
     {'name': 'HP Spectre x360 14', 'description': 'Laptop HP Spectre x360 14 cao cap cho cong viec sang tao', 'price': 38990000, 'category_slug': 'laptop', 'brand_name': 'HP', 'attributes': {'ram': '16GB', 'cpu': 'Intel Core Ultra 7', 'storage': '1TB SSD', 'screen_size': '14 inch OLED'}, 'variants': []},
     {'name': 'Dell Inspiron 14 5430', 'description': 'Laptop Dell Inspiron 14 can bang giua hoc tap va van phong', 'price': 20990000, 'category_slug': 'laptop', 'brand_name': 'Dell', 'attributes': {'ram': '16GB', 'cpu': 'Intel i5-1335U', 'storage': '512GB SSD', 'screen_size': '14 inch'}, 'variants': []},
     {'name': 'ASUS ROG Zephyrus G14', 'description': 'Laptop gaming ASUS ROG Zephyrus G14 hieu nang cao', 'price': 45990000, 'category_slug': 'laptop', 'brand_name': 'ASUS', 'attributes': {'ram': '32GB', 'cpu': 'AMD Ryzen 9', 'storage': '1TB SSD', 'screen_size': '14 inch'}, 'variants': []},
     {'name': 'Lenovo Yoga 7i 14', 'description': 'Laptop Lenovo Yoga 7i 2 in 1 linh hoat', 'price': 26990000, 'category_slug': 'laptop', 'brand_name': 'Lenovo', 'attributes': {'ram': '16GB', 'cpu': 'Intel Core Ultra 5', 'storage': '512GB SSD', 'screen_size': '14 inch Touch'}, 'variants': []},
     {'name': 'MacBook Air 15 M3', 'description': 'Apple MacBook Air 15 inch chip M3 cho nhu cau da nhiem', 'price': 36990000, 'category_slug': 'laptop', 'brand_name': 'Apple', 'attributes': {'ram': '16GB', 'cpu': 'Apple M3', 'storage': '512GB SSD', 'screen_size': '15.3 inch'}, 'variants': []},
 
-    # Electronics - Mobile
-    {'name': 'Samsung Galaxy Z Fold6', 'description': 'Dien thoai gap Samsung Galaxy Z Fold6 man hinh lon da nhiem', 'price': 41990000, 'category_slug': 'mobile', 'brand_name': 'Samsung', 'attributes': {'ram': '12GB', 'storage': '512GB', 'screen_size': '7.6 inch', 'camera': '50MP'}, 'variants': []},
-    {'name': 'iPhone 15', 'description': 'Apple iPhone 15 phien ban tieu chuan voi Dynamic Island', 'price': 22990000, 'category_slug': 'mobile', 'brand_name': 'Apple', 'attributes': {'ram': '6GB', 'storage': '128GB', 'screen_size': '6.1 inch', 'camera': '48MP'}, 'variants': []},
-    {'name': 'Xiaomi 14', 'description': 'Xiaomi 14 man hinh nho gon, chip flagship', 'price': 16990000, 'category_slug': 'mobile', 'brand_name': 'Xiaomi', 'attributes': {'ram': '12GB', 'storage': '256GB', 'screen_size': '6.36 inch', 'camera': '50MP'}, 'variants': []},
-    {'name': 'Oppo Reno11 Pro 5G', 'description': 'Oppo Reno11 Pro 5G thiet ke dep, chup chan dung an tuong', 'price': 13990000, 'category_slug': 'mobile', 'brand_name': 'Oppo', 'attributes': {'ram': '12GB', 'storage': '256GB', 'screen_size': '6.7 inch', 'camera': '50MP'}, 'variants': []},
-    {'name': 'Samsung Galaxy A55 5G', 'description': 'Samsung Galaxy A55 5G tam trung can bang', 'price': 9990000, 'category_slug': 'mobile', 'brand_name': 'Samsung', 'attributes': {'ram': '8GB', 'storage': '128GB', 'screen_size': '6.6 inch', 'camera': '50MP'}, 'variants': []},
+    {'name': 'Samsung Galaxy Z Fold6', 'description': 'Dien thoai gap Samsung Galaxy Z Fold6 man hinh lon da nhiem', 'price': 41990000, 'category_slug': 'dien-thoai', 'brand_name': 'Samsung', 'attributes': {'ram': '12GB', 'storage': '512GB', 'screen_size': '7.6 inch', 'camera': '50MP'}, 'variants': []},
+    {'name': 'iPhone 15', 'description': 'Apple iPhone 15 phien ban tieu chuan voi Dynamic Island', 'price': 22990000, 'category_slug': 'dien-thoai', 'brand_name': 'Apple', 'attributes': {'ram': '6GB', 'storage': '128GB', 'screen_size': '6.1 inch', 'camera': '48MP'}, 'variants': []},
+    {'name': 'Xiaomi 14', 'description': 'Xiaomi 14 man hinh nho gon, chip flagship', 'price': 16990000, 'category_slug': 'dien-thoai', 'brand_name': 'Xiaomi', 'attributes': {'ram': '12GB', 'storage': '256GB', 'screen_size': '6.36 inch', 'camera': '50MP'}, 'variants': []},
+    {'name': 'Oppo Reno11 Pro 5G', 'description': 'Oppo Reno11 Pro 5G thiet ke dep, chup chan dung an tuong', 'price': 13990000, 'category_slug': 'dien-thoai', 'brand_name': 'Oppo', 'attributes': {'ram': '12GB', 'storage': '256GB', 'screen_size': '6.7 inch', 'camera': '50MP'}, 'variants': []},
+    {'name': 'Samsung Galaxy A55 5G', 'description': 'Samsung Galaxy A55 5G tam trung can bang', 'price': 9990000, 'category_slug': 'dien-thoai', 'brand_name': 'Samsung', 'attributes': {'ram': '8GB', 'storage': '128GB', 'screen_size': '6.6 inch', 'camera': '50MP'}, 'variants': []},
 
-    # Electronics - Dieu hoa
-    {'name': 'Daikin Inverter 1HP FTKB25XVMV', 'description': 'Dieu hoa Daikin 1HP tiet kiem dien cho phong nho', 'price': 10490000, 'category_slug': 'dieu-hoa', 'brand_name': 'Daikin', 'attributes': {'capacity': '1HP', 'type': 'Inverter', 'gas': 'R32'}, 'variants': []},
-    {'name': 'Panasonic Inverter 1.5HP XPU12XKH-8', 'description': 'Dieu hoa Panasonic 1.5HP voi cong nghe nanoe X', 'price': 14990000, 'category_slug': 'dieu-hoa', 'brand_name': 'Panasonic', 'attributes': {'capacity': '1.5HP', 'type': 'Inverter', 'technology': 'nanoe X'}, 'variants': []},
-    {'name': 'LG DualCool Inverter 1.5HP V13WIN', 'description': 'Dieu hoa LG DualCool Inverter van hanh em ai', 'price': 13290000, 'category_slug': 'dieu-hoa', 'brand_name': 'LG', 'attributes': {'capacity': '1.5HP', 'type': 'Inverter', 'technology': 'Dual Inverter'}, 'variants': []},
+    {'name': 'Anker PowerCore 10000 PD', 'description': 'Pin du phong 10000mAh ho tro sac nhanh PD', 'price': 790000, 'category_slug': 'phu-kien', 'brand_name': 'Anker', 'attributes': {'type': 'Power Bank', 'compatibility': 'USB-C PD', 'color': 'Black'}, 'variants': []},
+    {'name': 'Baseus Bluetooth Earbuds Bowie MA10', 'description': 'Tai nghe true wireless chong on co ban', 'price': 890000, 'category_slug': 'phu-kien', 'brand_name': 'Baseus', 'attributes': {'type': 'Earbuds', 'compatibility': 'iOS/Android', 'color': 'Black'}, 'variants': []},
+    {'name': 'Logitech K380 Multi-Device', 'description': 'Ban phim Bluetooth nho gon cho nhieu thiet bi', 'price': 990000, 'category_slug': 'phu-kien', 'brand_name': 'Logitech', 'attributes': {'type': 'Keyboard', 'compatibility': 'Windows/macOS', 'color': 'White'}, 'variants': []},
 
-    # Electronics - Tu lanh
-    {'name': 'Panasonic Prime+ Edition 550L', 'description': 'Tu lanh Panasonic Prime+ Edition dung tich lon', 'price': 26990000, 'category_slug': 'tu-lanh', 'brand_name': 'Panasonic', 'attributes': {'capacity': '550L', 'type': 'Multi Door', 'technology': 'Prime Fresh+'}, 'variants': []},
-    {'name': 'LG InstaView Door-in-Door 601L', 'description': 'Tu lanh LG InstaView Door-in-Door cao cap', 'price': 35990000, 'category_slug': 'tu-lanh', 'brand_name': 'LG', 'attributes': {'capacity': '601L', 'type': 'Side by Side', 'technology': 'InstaView'}, 'variants': []},
+    {'name': 'Apple Watch SE 2 GPS 44mm', 'description': 'Apple Watch SE gen 2 phu hop nhu cau co ban', 'price': 7490000, 'category_slug': 'dong-ho', 'brand_name': 'Apple', 'attributes': {'size': '44mm', 'battery': 'Up to 18 hours', 'water_resistance': '50m'}, 'variants': []},
 
-    # Thoi trang - Ao
-    {'name': 'Nike Sportswear Club T-Shirt', 'description': 'Ao thun Nike Sportswear Club co ban de phoi do', 'price': 690000, 'category_slug': 'ao', 'brand_name': 'Nike', 'attributes': {'size': 'M', 'color': 'Grey', 'material': 'Cotton'}, 'variants': []},
-    {'name': 'Adidas Adicolor Classics Tee', 'description': 'Ao thun Adidas Adicolor phong cach streetwear', 'price': 720000, 'category_slug': 'ao', 'brand_name': 'Adidas', 'attributes': {'size': 'L', 'color': 'Black', 'material': 'Cotton'}, 'variants': []},
-    {'name': 'Uniqlo U Crew Neck T-Shirt', 'description': 'Ao thun Uniqlo U chat lieu day dan, form dep', 'price': 499000, 'category_slug': 'ao', 'brand_name': 'Uniqlo', 'attributes': {'size': 'M', 'color': 'White', 'material': 'Cotton'}, 'variants': []},
+    # More laptops
+    {'name': 'ASUS TUF Gaming F15', 'description': 'Laptop gaming ASUS TUF F15 ben bi, hieu nang on dinh', 'price': 22990000, 'category_slug': 'laptop', 'brand_name': 'ASUS', 'attributes': {'ram': '16GB', 'cpu': 'Intel i5-12500H', 'storage': '512GB SSD', 'screen_size': '15.6 inch 144Hz'}, 'variants': []},
+    {'name': 'Lenovo Legion 5 15', 'description': 'Laptop gaming Lenovo Legion 5 can bang hieu nang va nhiet do', 'price': 27990000, 'category_slug': 'laptop', 'brand_name': 'Lenovo', 'attributes': {'ram': '16GB', 'cpu': 'AMD Ryzen 7', 'storage': '1TB SSD', 'screen_size': '15.6 inch 165Hz'}, 'variants': []},
+    {'name': 'Dell Latitude 7440', 'description': 'Laptop doanh nhan Dell Latitude 7440 nhe, ben, bao mat tot', 'price': 33990000, 'category_slug': 'laptop', 'brand_name': 'Dell', 'attributes': {'ram': '16GB', 'cpu': 'Intel i7-1365U', 'storage': '512GB SSD', 'screen_size': '14 inch'}, 'variants': []},
+    {'name': 'HP Pavilion 14', 'description': 'Laptop HP Pavilion 14 phu hop hoc tap va van phong', 'price': 15990000, 'category_slug': 'laptop', 'brand_name': 'HP', 'attributes': {'ram': '8GB', 'cpu': 'Intel i5-1235U', 'storage': '512GB SSD', 'screen_size': '14 inch'}, 'variants': []},
 
-    # Thoi trang - Quan
-    {'name': "Levi's 511 Slim Fit Jeans", 'description': "Quan jeans Levi's 511 slim fit de mac hang ngay", 'price': 2490000, 'category_slug': 'quan', 'brand_name': "Levi's", 'attributes': {'size': '32', 'color': 'Dark Blue', 'material': 'Denim'}, 'variants': []},
-    {'name': 'Adidas Essentials Fleece Pants', 'description': 'Quan ni Adidas Essentials giu am va thoai mai', 'price': 1390000, 'category_slug': 'quan', 'brand_name': 'Adidas', 'attributes': {'size': 'L', 'color': 'Grey', 'material': 'Cotton Blend'}, 'variants': []},
-    {'name': 'Nike Dri-FIT Challenger Pants', 'description': 'Quan tap Nike Dri-FIT Challenger danh cho chay bo', 'price': 1590000, 'category_slug': 'quan', 'brand_name': 'Nike', 'attributes': {'size': 'M', 'color': 'Black', 'material': 'Polyester'}, 'variants': []},
+    # More phones
+    {'name': 'Samsung Galaxy S24', 'description': 'Samsung Galaxy S24 thiet ke nho gon, man hinh dep', 'price': 21990000, 'category_slug': 'dien-thoai', 'brand_name': 'Samsung', 'attributes': {'ram': '8GB', 'storage': '256GB', 'screen_size': '6.2 inch', 'camera': '50MP'}, 'variants': []},
+    {'name': 'Samsung Galaxy S24 Plus', 'description': 'Samsung Galaxy S24+ pin lon, hieu nang manh', 'price': 25990000, 'category_slug': 'dien-thoai', 'brand_name': 'Samsung', 'attributes': {'ram': '12GB', 'storage': '256GB', 'screen_size': '6.7 inch', 'camera': '50MP'}, 'variants': []},
+    {'name': 'iPhone 15 Pro', 'description': 'Apple iPhone 15 Pro - Titanium, hieu nang cao', 'price': 28990000, 'category_slug': 'dien-thoai', 'brand_name': 'Apple', 'attributes': {'ram': '8GB', 'storage': '128GB', 'screen_size': '6.1 inch', 'camera': '48MP'}, 'variants': []},
+    {'name': 'Xiaomi 14 Ultra', 'description': 'Xiaomi 14 Ultra camera manh, man hinh sang', 'price': 28990000, 'category_slug': 'dien-thoai', 'brand_name': 'Xiaomi', 'attributes': {'ram': '16GB', 'storage': '512GB', 'screen_size': '6.73 inch', 'camera': '50MP Quad'}, 'variants': []},
+    {'name': 'Oppo Find N3', 'description': 'Oppo Find N3 dien thoai gap nhe, man hinh lon', 'price': 34990000, 'category_slug': 'dien-thoai', 'brand_name': 'Oppo', 'attributes': {'ram': '12GB', 'storage': '512GB', 'screen_size': '7.8 inch', 'camera': '48MP'}, 'variants': []},
 
-    # Thoi trang - Giay dep
-    {'name': 'Nike Air Max 270', 'description': 'Giay Nike Air Max 270 de mem va em chan', 'price': 4290000, 'category_slug': 'giay-dep', 'brand_name': 'Nike', 'attributes': {'size': '42', 'color': 'Black/White', 'material': 'Mesh'}, 'variants': []},
-    {'name': 'Adidas Superstar', 'description': 'Giay Adidas Superstar kinh dien voi mui vo so', 'price': 2590000, 'category_slug': 'giay-dep', 'brand_name': 'Adidas', 'attributes': {'size': '41', 'color': 'White/Black', 'material': 'Leather'}, 'variants': []},
-    {'name': 'Puma RS-X Efekt', 'description': 'Giay Puma RS-X Efekt phong cach retro hien dai', 'price': 2890000, 'category_slug': 'giay-dep', 'brand_name': 'Puma', 'attributes': {'size': '40', 'color': 'Grey/Orange', 'material': 'Textile'}, 'variants': []},
+    # More accessories
+    {'name': 'Anker Nano II 30W Charger', 'description': 'Sac nhanh GaN 30W nho gon cho iPhone/Android', 'price': 399000, 'category_slug': 'phu-kien', 'brand_name': 'Anker', 'attributes': {'type': 'Charger', 'compatibility': 'USB-C PD', 'color': 'White'}, 'variants': []},
+    {'name': 'Baseus Magnetic Power Bank 10000mAh', 'description': 'Pin du phong nam cham tien, sac nhanh', 'price': 990000, 'category_slug': 'phu-kien', 'brand_name': 'Baseus', 'attributes': {'type': 'Power Bank', 'compatibility': 'MagSafe', 'color': 'Black'}, 'variants': []},
+    {'name': 'Logitech G304 Lightspeed', 'description': 'Chuột gaming khong day Logitech G304', 'price': 890000, 'category_slug': 'phu-kien', 'brand_name': 'Logitech', 'attributes': {'type': 'Mouse', 'compatibility': 'Windows/macOS', 'color': 'Black'}, 'variants': []},
+    {'name': 'Logitech Pebble 2 Combo', 'description': 'Combo chuot va ban phim nho gon cho van phong', 'price': 1490000, 'category_slug': 'phu-kien', 'brand_name': 'Logitech', 'attributes': {'type': 'Keyboard+Mouse', 'compatibility': 'Windows/macOS', 'color': 'Sand'}, 'variants': []},
 
-    # My pham
-    {'name': 'MAC Locked Kiss Ink Lipcolour', 'description': 'Son kem MAC Locked Kiss Ink ben mau dai lau', 'price': 790000, 'category_slug': 'son-moi', 'brand_name': 'MAC', 'attributes': {'shade': 'Mull It Over', 'type': 'Liquid Matte'}, 'variants': []},
+    # More watches
+    {'name': 'Apple Watch Ultra 2 49mm', 'description': 'Apple Watch Ultra 2 ben bi, pin lau cho the thao', 'price': 22990000, 'category_slug': 'dong-ho', 'brand_name': 'Apple', 'attributes': {'size': '49mm', 'battery': 'Up to 36 hours', 'water_resistance': '100m'}, 'variants': []},
+    {'name': 'Samsung Galaxy Watch6 Classic 47mm', 'description': 'Galaxy Watch6 Classic vong xoay co dien, man hinh lon', 'price': 8990000, 'category_slug': 'dong-ho', 'brand_name': 'Samsung', 'attributes': {'size': '47mm', 'battery': 'Up to 40 hours', 'water_resistance': '5ATM'}, 'variants': []},
+
+    # Extra laptops
+    {'name': 'MacBook Pro 16" M3 Pro', 'description': 'MacBook Pro 16 inch chip M3 Pro cho cong viec nang', 'price': 69990000, 'category_slug': 'laptop', 'brand_name': 'Apple', 'attributes': {'ram': '18GB', 'cpu': 'Apple M3 Pro', 'storage': '512GB SSD', 'screen_size': '16.2 inch'}, 'variants': []},
+    {'name': 'ASUS Zenbook S 14', 'description': 'Laptop sieu nhe ASUS Zenbook S 14 cho di chuyen', 'price': 32990000, 'category_slug': 'laptop', 'brand_name': 'ASUS', 'attributes': {'ram': '16GB', 'cpu': 'Intel Core Ultra 7', 'storage': '1TB SSD', 'screen_size': '14 inch OLED'}, 'variants': []},
+    {'name': 'Lenovo ThinkPad T14s Gen 4', 'description': 'ThinkPad T14s ben bi, bao mat cao, phu hop doanh nhan', 'price': 35990000, 'category_slug': 'laptop', 'brand_name': 'Lenovo', 'attributes': {'ram': '16GB', 'cpu': 'Intel i7', 'storage': '512GB SSD', 'screen_size': '14 inch'}, 'variants': []},
+    {'name': 'Dell Precision 5680', 'description': 'Laptop workstation Dell Precision cho do hoa va ky thuat', 'price': 75990000, 'category_slug': 'laptop', 'brand_name': 'Dell', 'attributes': {'ram': '32GB', 'cpu': 'Intel i9', 'storage': '1TB SSD', 'screen_size': '16 inch'}, 'variants': []},
+    {'name': 'HP Envy x360 14', 'description': 'Laptop 2-in-1 HP Envy x360 man hinh cam ung', 'price': 21990000, 'category_slug': 'laptop', 'brand_name': 'HP', 'attributes': {'ram': '16GB', 'cpu': 'AMD Ryzen 7', 'storage': '512GB SSD', 'screen_size': '14 inch Touch'}, 'variants': []},
+
+    # Extra phones
+    {'name': 'iPhone 14 Pro Max', 'description': 'iPhone 14 Pro Max still strong choice, man hinh dep', 'price': 24990000, 'category_slug': 'dien-thoai', 'brand_name': 'Apple', 'attributes': {'ram': '6GB', 'storage': '256GB', 'screen_size': '6.7 inch', 'camera': '48MP'}, 'variants': []},
+    {'name': 'Samsung Galaxy Z Flip6', 'description': 'Galaxy Z Flip6 nho gon, thoi trang, man hinh phu tien', 'price': 25990000, 'category_slug': 'dien-thoai', 'brand_name': 'Samsung', 'attributes': {'ram': '8GB', 'storage': '256GB', 'screen_size': '6.7 inch', 'camera': '12MP'}, 'variants': []},
+    {'name': 'Xiaomi Redmi Note 13 Pro', 'description': 'Redmi Note 13 Pro pin trau, gia tot cho hoc sinh', 'price': 8990000, 'category_slug': 'dien-thoai', 'brand_name': 'Xiaomi', 'attributes': {'ram': '8GB', 'storage': '256GB', 'screen_size': '6.67 inch', 'camera': '200MP'}, 'variants': []},
+    {'name': 'Oppo A79 5G', 'description': 'Oppo A79 5G phu hop nhu cau co ban, gia hop ly', 'price': 6990000, 'category_slug': 'dien-thoai', 'brand_name': 'Oppo', 'attributes': {'ram': '8GB', 'storage': '128GB', 'screen_size': '6.72 inch', 'camera': '50MP'}, 'variants': []},
+
+    # Extra accessories
+    {'name': 'Anker Soundcore Q30', 'description': 'Tai nghe chong on, pin lau, gia/hiieu nang tot', 'price': 1990000, 'category_slug': 'phu-kien', 'brand_name': 'Anker', 'attributes': {'type': 'Headphones', 'compatibility': 'iOS/Android', 'color': 'Black'}, 'variants': []},
+    {'name': 'Baseus 6-in-1 USB-C Hub', 'description': 'Hub USB-C da cong, ho tro HDMI/USB/PD', 'price': 790000, 'category_slug': 'phu-kien', 'brand_name': 'Baseus', 'attributes': {'type': 'USB-C Hub', 'compatibility': 'USB-C', 'color': 'Grey'}, 'variants': []},
+    {'name': 'Logitech C920 HD Pro Webcam', 'description': 'Webcam Logitech C920 chat luong tot cho hoc/meet', 'price': 1690000, 'category_slug': 'phu-kien', 'brand_name': 'Logitech', 'attributes': {'type': 'Webcam', 'compatibility': 'Windows/macOS', 'color': 'Black'}, 'variants': []},
+    {'name': 'Logitech M221 Silent', 'description': 'Chuột im lang, gia re, phu hop van phong', 'price': 299000, 'category_slug': 'phu-kien', 'brand_name': 'Logitech', 'attributes': {'type': 'Mouse', 'compatibility': 'Windows/macOS', 'color': 'Black'}, 'variants': []},
+    {'name': 'Baseus Car Charger 65W', 'description': 'Sac xe hoi 65W, 2 cong, sac nhanh', 'price': 450000, 'category_slug': 'phu-kien', 'brand_name': 'Baseus', 'attributes': {'type': 'Car Charger', 'compatibility': 'USB-C PD', 'color': 'Black'}, 'variants': []},
+
+    # Extra watches
+    {'name': 'Apple Watch Series 8 GPS 45mm', 'description': 'Apple Watch Series 8 van rat on cho nhu cau hang ngay', 'price': 9490000, 'category_slug': 'dong-ho', 'brand_name': 'Apple', 'attributes': {'size': '45mm', 'battery': 'Up to 18 hours', 'water_resistance': '50m'}, 'variants': []},
+    {'name': 'Samsung Galaxy Watch5 Pro 45mm', 'description': 'Watch5 Pro pin ben, phu hop tap luyen', 'price': 7990000, 'category_slug': 'dong-ho', 'brand_name': 'Samsung', 'attributes': {'size': '45mm', 'battery': 'Up to 80 hours', 'water_resistance': '5ATM'}, 'variants': []},
 ]
 
-TARGET_PRODUCT_COUNT = 50
+TARGET_PRODUCT_COUNT = len(PRODUCTS)
 
 
 def build_product_pool(target_count=TARGET_PRODUCT_COUNT):
     """Use only real product entries (no synthetic naming)."""
     pool = PRODUCTS
-    if target_count > len(pool):
-        raise ValueError(f"Requested {target_count} products but only {len(pool)} real products are defined.")
-    return pool[:target_count]
+    return pool[: min(target_count, len(pool))]
 
 
 class Command(BaseCommand):

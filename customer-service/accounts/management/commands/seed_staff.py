@@ -18,7 +18,16 @@ class Command(BaseCommand):
 
         user = CustomUser.objects.filter(username=username).first()
         if user:
-            self.stdout.write(self.style.WARNING(f"User already exists: {username}"))
+            # Ensure password/role stays consistent across reruns
+            user.set_password(password)
+            if make_admin:
+                user.is_staff = True
+                user.is_superuser = True
+            else:
+                user.is_staff = True
+                user.is_superuser = False
+            user.save(update_fields=["password", "is_staff", "is_superuser"])
+            self.stdout.write(self.style.SUCCESS(f"Updated user: {username} (admin={make_admin})"))
         else:
             if make_admin:
                 user = CustomUser.objects.create_superuser(

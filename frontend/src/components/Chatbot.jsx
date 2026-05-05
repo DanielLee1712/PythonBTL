@@ -8,9 +8,10 @@ import {
 
 const QUICK_PROMPTS = [
   { icon: '🔥', text: 'Sản phẩm bán chạy nhất?' },
-  { icon: '💰', text: 'Gợi ý quà tặng dưới 500k' },
-  { icon: '📱', text: 'Tư vấn mua laptop' },
-  { icon: '👗', text: 'Xu hướng thời trang' },
+  { icon: '💰', text: 'Gợi ý phụ kiện dưới 500k' },
+  { icon: '💻', text: 'Tư vấn mua laptop học tập & văn phòng' },
+  { icon: '📱', text: 'Tư vấn mua điện thoại theo nhu cầu' },
+  { icon: '⌚', text: 'Gợi ý đồng hồ thông minh' },
 ];
 
 export default function Chatbot() {
@@ -97,10 +98,10 @@ export default function Chatbot() {
                   <Sparkles size={22} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg tracking-wide">AI Shopping Assistant</h3>
+                  <h3 className="font-bold text-lg tracking-wide">ElecStore Assistant</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-blue-100 text-xs font-medium">GraphRAG + Neo4j • Online</span>
+                    <span className="text-blue-100 text-xs font-medium">Online</span>
                   </div>
                 </div>
               </div>
@@ -127,8 +128,7 @@ export default function Chatbot() {
                     <p className="font-bold text-gray-800">Xin chào! 👋</p>
                   </div>
                   <p className="text-gray-600 text-sm leading-relaxed">
-                    Tôi là trợ lý mua sắm AI, kết nối trực tiếp với <strong>Knowledge Graph</strong> và dữ liệu sản phẩm.
-                    Tôi có thể tư vấn sản phẩm phù hợp dựa trên <strong>lịch sử mua sắm</strong> của bạn.
+                    Mình có thể tư vấn <strong>laptop</strong>, <strong>điện thoại</strong>, <strong>phụ kiện</strong> và <strong>đồng hồ</strong> theo nhu cầu và ngân sách của bạn.
                   </p>
                 </div>
 

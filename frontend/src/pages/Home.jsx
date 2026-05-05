@@ -1,15 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useStore } from '../store/useStore';
 import { AI_SERVICE_URL, PRODUCT_SERVICE_URL } from '../config';
 import { fetchProductsByIds, pickProductRow } from '../utils/productRefresh';
-import { Search as SearchIcon, Sparkles, TrendingUp } from 'lucide-react';
+import { Search as SearchIcon, Sparkles, TrendingUp, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 
 export default function Home() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const activeCatId = useMemo(() => {
+    const v = params.get('cat');
+    return v ? Number(v) : null;
+  }, [params]);
   const [products, setProducts] = useState([]);
   const [recommended, setRecommended] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +21,9 @@ export default function Home() {
   const [hasSearched, setHasSearched] = useState(false);
   const [searching, setSearching] = useState(false);
   const [searchSource, setSearchSource] = useState('');
+  const [sort, setSort] = useState('newest'); // newest | price_asc | price_desc
+  const [page, setPage] = useState(1);
+  const pageSize = 16;
   const user = useStore((state) => state.user);
 
   const refreshProductById = useCallback((productId, opts = {}) => {
@@ -70,28 +77,60 @@ export default function Home() {
   }, [params, navigate]);
 
   useEffect(() => {
-    // Port 8001 is Product Service
-    axios.get(`${PRODUCT_SERVICE_URL}/api/v1/products/`)
-      .then(res => setProducts(res.data.results || res.data))
-      .catch(() => setProducts([
-        {id: 1, title: 'Laptop Gaming Alienware', price: 45000000, category_name: 'Electronics'},
-        {id: 2, title: 'Son Tom Ford', price: 1500000, category_name: 'Cosmetics'},
-        {id: 3, title: 'Khóa học Đồ Họa 3D', price: 900000, category_name: 'Education'},
-        {id: 4, title: 'Chuột Razer DeathAdder', price: 800000, category_name: 'Electronics'}
-      ]));
+    let cancelled = false;
 
-    if (user) {
-      // Fetch GNN Recommendations from AI-Service
-      axios.get(`${AI_SERVICE_URL}/api/v1/recommendations/${user.id}/`)
-        .then(res => {
-          const ids = res.data.recommendations || [];
-          if (ids.length > 0) {
-            axios.get(`${PRODUCT_SERVICE_URL}/api/v1/products/?ids=${ids.join(',')}`)
-              .then(pRes => setRecommended(pRes.data.results || pRes.data))
-              .catch(() => console.log("Lỗi fetch recommended products"));
-          }
-        }).catch(err => console.log("GNN service error", err));
-    }
+    const load = async () => {
+      // Category viewset returns a plain list (no pagination)
+      if (activeCatId) {
+        const url = `${PRODUCT_SERVICE_URL}/api/v1/products/by-category/${activeCatId}/`;
+        const res = await axios.get(url, { params: { _: Date.now() } });
+        const rows = res.data?.results ?? res.data ?? [];
+        if (!cancelled) setProducts(Array.isArray(rows) ? rows : []);
+        return;
+      }
+
+      // DRF list endpoint is paginated (default page size ~20). Fetch all pages.
+      const url = `${PRODUCT_SERVICE_URL}/api/v1/products/`;
+      const all = [];
+      let pageNum = 1;
+      while (pageNum <= 50) {
+        const res = await axios.get(url, {
+          params: { page: pageNum, page_size: 100, _: Date.now() },
+        });
+        const data = res.data;
+        const rows = data?.results ?? data ?? [];
+        if (!Array.isArray(rows)) break;
+        all.push(...rows);
+        if (!data?.next) break;
+        pageNum += 1;
+      }
+      if (!cancelled) setProducts(all);
+    };
+
+    load().catch(() => {
+      if (!cancelled) setProducts([]);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCatId]);
+
+  useEffect(() => {
+    if (!user) return;
+    // Fetch GNN Recommendations from AI-Service
+    axios
+      .get(`${AI_SERVICE_URL}/api/v1/recommendations/${user.id}/`)
+      .then((res) => {
+        const ids = res.data.recommendations || [];
+        if (ids.length > 0) {
+          axios
+            .get(`${PRODUCT_SERVICE_URL}/api/v1/products/`, { params: { ids: ids.join(',') } })
+            .then((pRes) => setRecommended(pRes.data.results || pRes.data))
+            .catch(() => console.log('Lỗi fetch recommended products'));
+        }
+      })
+      .catch((err) => console.log('GNN service error', err));
   }, [user]);
 
   const handleSearch = async (e) => {
@@ -143,6 +182,41 @@ export default function Home() {
     }
   };
 
+  const clearSearchResults = () => {
+    setSearchTerm('');
+    setHasSearched(false);
+    setSearchResults([]);
+    setSearchSource('');
+  };
+
+  const displayProducts = useMemo(() => {
+    const rows = Array.isArray(products) ? products.slice() : [];
+    if (sort === 'price_asc') {
+      rows.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+    } else if (sort === 'price_desc') {
+      rows.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+    } else {
+      rows.sort((a, b) => {
+        const da = Date.parse(a.created_at || '') || 0;
+        const db = Date.parse(b.created_at || '') || 0;
+        if (da !== db) return db - da;
+        return Number(b.id || 0) - Number(a.id || 0);
+      });
+    }
+    return rows;
+  }, [products, sort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeCatId, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(displayProducts.length / pageSize));
+  const pageClamped = Math.min(Math.max(1, page), totalPages);
+  const pageItems = useMemo(() => {
+    const start = (pageClamped - 1) * pageSize;
+    return displayProducts.slice(start, start + pageSize);
+  }, [displayProducts, pageClamped]);
+
 
 
   return (
@@ -158,12 +232,24 @@ export default function Home() {
           </div>
         </div>
         <form onSubmit={handleSearch} className="flex gap-3">
-          <input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Nhập tên sản phẩm hoặc danh mục..."
-            className="flex-1 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-blue-200 focus:border-blue-400 transition-all"
-          />
+          <div className="relative flex-1">
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Nhập tên sản phẩm hoặc danh mục..."
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-11 outline-none focus:ring-2 ring-blue-200 focus:border-blue-400 transition-all"
+            />
+            {(hasSearched || searchTerm.trim()) && (
+              <button
+                type="button"
+                onClick={clearSearchResults}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-700"
+                title="Xóa tìm kiếm"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
           <button
             type="submit"
             disabled={searching}
@@ -239,9 +325,53 @@ export default function Home() {
 
       {/* ── All Products Section ── */}
       <section>
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">Tất Cả Sản Phẩm</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map(p => <ProductCard p={p} key={p.id} onAfterAddToCart={refreshProductById} />)}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            {activeCatId ? 'Sản phẩm theo danh mục' : 'Tất Cả Sản Phẩm'}
+          </h2>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
+          >
+            <option value="newest">Mới nhất</option>
+            <option value="price_asc">Giá tăng dần</option>
+            <option value="price_desc">Giá giảm dần</option>
+          </select>
+        </div>
+        <div className="space-y-4">
+          <div className="text-sm text-gray-600">
+            Hiển thị {pageItems.length} / {displayProducts.length} sản phẩm
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {pageItems.map((p) => (
+              <ProductCard p={p} key={p.id} onAfterAddToCart={refreshProductById} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                disabled={pageClamped <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 disabled:opacity-50 hover:bg-gray-50"
+              >
+                Trước
+              </button>
+              <div className="text-sm text-gray-600 px-2">
+                Trang {pageClamped} / {totalPages}
+              </div>
+              <button
+                type="button"
+                disabled={pageClamped >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 disabled:opacity-50 hover:bg-gray-50"
+              >
+                Sau
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>

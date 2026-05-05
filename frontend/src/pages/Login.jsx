@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Lock, ArrowRight } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useStore } from '../store/useStore';
 import { customersApiBase } from '../config';
@@ -11,6 +11,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const setUser = useStore((state) => state.setUser);
 
   const handleLogin = async (e) => {
@@ -45,7 +46,8 @@ export default function Login() {
         isStaff: Boolean(payload.is_staff),
         isAdmin: Boolean(payload.is_admin),
       });
-      navigate('/');
+      const to = location.state?.from || '/';
+      navigate(to);
     } catch (err) {
       console.error('Login error:', err);
       setError('Tên đăng nhập hoặc mật khẩu không chính xác.');
